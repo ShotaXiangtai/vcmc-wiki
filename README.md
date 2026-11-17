@@ -2,7 +2,7 @@
 
 Minecraft サーバー「VoiceMC」のプレイヤー向け攻略・ルール集 Wiki です。見た目は Wikipedia（Vector の旧デザイン）風です。
 
-- 公開先：<https://shotaxiangtai.github.io/vcmc-wiki/>
+- 公開先：<https://wiki.vcmc.jp/>
 - サイトは **GitHub Pages**（ビルド不要の HTML / CSS / JavaScript）。サーバーや秘密の設定は不要です
 - **GitHub アカウントがあれば、だれでも編集を提案できます**。Wiki の編集画面で書いてプレビューし、本文をコピーして GitHub の編集画面に貼り付け、投稿者自身のアカウントでプルリクエスト（PR）を作ります
 - **管理者が PR を確認してマージすると公開**されます
@@ -70,7 +70,10 @@ gh repo create vcmc-wiki --public --source . --push
 gh api -X POST repos/ShotaXiangtai/vcmc-wiki/pages -f build_type=workflow
 ```
 ```bash
-gh repo edit ShotaXiangtai/vcmc-wiki --delete-branch-on-merge --enable-wiki=false --enable-projects=false --homepage https://shotaxiangtai.github.io/vcmc-wiki/
+gh api -X PUT repos/ShotaXiangtai/vcmc-wiki/pages -f cname=wiki.vcmc.jp -F https_enforced=true
+```
+```bash
+gh repo edit ShotaXiangtai/vcmc-wiki --delete-branch-on-merge --enable-wiki=false --enable-projects=false --homepage https://wiki.vcmc.jp/
 ```
 ```bash
 gh api -X PUT repos/ShotaXiangtai/vcmc-wiki/actions/permissions/fork-pr-contributor-approval -f approval_policy=first_time_contributors
@@ -82,12 +85,15 @@ gh workflow run deploy.yml -R ShotaXiangtai/vcmc-wiki
 | 設定 | 内容 | 画面での場所 |
 | --- | --- | --- |
 | 公開 | Pages の Source を「GitHub Actions」にする | Settings → Pages → Build and deployment |
+| 独自ドメイン | `wiki.vcmc.jp`（DNS は `wiki` → `shotaxiangtai.github.io` の CNAME）。HTTPS を強制 | Settings → Pages → Custom domain / Enforce HTTPS |
 | マージしたブランチを自動で消す | Automatically delete head branches | Settings → General → Pull Requests |
 | 初めての投稿者の Actions | 初めて投稿する人の PR は、検証（Actions）を動かす前に管理者の承認が必要 | Settings → Actions → General → Approval for running fork pull request workflows |
 
 ![Pages の Source を GitHub Actions にする](docs/images/02-pages-source.png)
 
 main に push（PR のマージを含む）すると、Actions の「Deploy」が動いて数分で公開されます。
+
+GitHub Actions で公開しているので、独自ドメインは `CNAME` ファイルではなく Pages の設定で管理しています。以前の `https://shotaxiangtai.github.io/vcmc-wiki/` は、自動で `https://wiki.vcmc.jp/` に転送されます。
 
 ---
 
@@ -160,7 +166,7 @@ $env:PW_CHANNEL = 'msedge'; npm run test:e2e
 
 ## 4. 投稿の流れ（投稿する人向け）
 
-Wiki の「[投稿のしかた](https://shotaxiangtai.github.io/vcmc-wiki/?p=投稿のしかた)」に画像付きでまとめています。編集画面の下にも同じ説明が出ます。
+Wiki の「[投稿のしかた](https://wiki.vcmc.jp/?p=投稿のしかた)」に画像付きでまとめています。編集画面の下にも同じ説明が出ます。
 
 1. Wiki の編集画面で書いて、プレビューで確認する
 2. 「① 本文をコピーする」→「② GitHub の編集画面を開く」

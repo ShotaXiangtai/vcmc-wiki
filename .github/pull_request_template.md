@@ -11,5 +11,5 @@
 - [ ] 投稿する文章・画像が CC BY-SA 4.0 で公開されることに同意します
 - [ ] 他のサイトや本などからの無断転載ではありません
 
-<!-- 利用規約：https://shotaxiangtai.github.io/vcmc-wiki/?p=利用規約
-     ライセンス：https://shotaxiangtai.github.io/vcmc-wiki/?p=ライセンス -->
+<!-- 利用規約：https://wiki.vcmc.jp/?p=利用規約
+     ライセンス：https://wiki.vcmc.jp/?p=ライセンス -->
