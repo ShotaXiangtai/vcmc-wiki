@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- 記事の中身はだれでも書けるので、スクリプトは自分のサイトのものだけ動くようにしている。
-     外部画像（追跡画像）も止めたい場合は img-src を 'self' data: にする（README の「セキュリティ」参照） -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; connect-src 'self'; font-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<!-- 記事の中身はだれでも書けるので、スクリプトは自分のサイトと X の埋め込み用のものだけ動くようにしている。
+     画像はこのサイトとスキンの顔（mc-heads.net）だけ。X のポスト・YouTube の動画は、見る人が「表示する」を押したときだけ読み込む -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://platform.x.com https://platform.twitter.com; style-src 'self' 'sha256-+4xn/JCgOk1Re8A9TIBIVlH4Eh6l88yKRvAhJ9yBeU4='; img-src 'self' data: https://mc-heads.net; connect-src 'self'; font-src 'self'; frame-src https://platform.x.com https://platform.twitter.com https://syndication.twitter.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Wiki</title>
 <link rel="icon" href="img/logo.png" type="image/png">

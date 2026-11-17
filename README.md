@@ -108,6 +108,8 @@ GitHub Actions で公開しているので、独自ドメインは `CNAME` フ�
 | `mainPage` | トップに出すページ | `メインページ` |
 | `helpPage` / `howtoPage` | 「Wikiの書き方」「投稿のしかた」のページ | `Wikiの書き方` / `投稿のしかた` |
 | `termsPage` / `licensePage` | 利用規約・ライセンスのページ | `利用規約` / `ライセンス` |
+| `imagesPage` | 画像のルールのページ | `画像のルール` |
+| `skin` | `[[スキン:MCID]]` の顔の画像と、押したときに開くページ | mc-heads.net / NameMC |
 | `contentLicense` | 記事のライセンス（名前と URL） | CC BY-SA 4.0 |
 | `sidebarLinks` | 左メニューの「リンク」欄 | 公式サイト・公式 Discord |
 | `repo` | 記事を置いているリポジトリ（編集の提案先・「履歴」タブ） | `ShotaXiangtai/vcmc-wiki` |
@@ -189,8 +191,8 @@ Wiki の「[投稿のしかた](https://wiki.vcmc.jp/?p=投稿のしかた)」�
    - 赤いときは、使えない記述があるか、説明欄の確認項目（利用規約・ライセンス・無断転載）にチェックが付いていません。コメントで直してもらうか、Close してください
 4. 「**Files changed**」タブで変更内容を確認する。ファイルの右上の表示切り替えで「rich diff」にすると、見た目に近い形で比べられます
    - `site/pages/` 以外のファイルの変更や、利用規約・ライセンスのページの変更には、Validate が警告を出します。特に注意してください
-   - 画像の URL、外部リンク、個人情報、無断転載、荒らしがないかを見ます
-   - 配信者のアイコンなど人の画像は、説明欄に「本人（と描いた人）の許可を取ったこと」が書かれているか、画像の下に「許可を得て掲載。CC BY-SA 4.0 の対象外」と書かれているかを確認します
+   - 埋め込んだ X のポスト・YouTube の動画（`[[埋め込み:URL]]`）、外部リンク、個人情報、無断転載、荒らしがないかを見ます。埋め込みの中身は、URL を開いて確かめてください
+   - 画像のルールは Wiki の「画像のルール」のページにあります
 
    ![Files changed タブ](docs/images/11-pr-files.png)
 
@@ -246,9 +248,10 @@ gh pr close 123 --comment "利用規約に反するため閉じました"
 
 - **投稿内容は一切信頼しません**：表示するときは必ず DOMPurify で無害化し（スクリプト・フォーム・style 属性などを除去）、外部リンクには `rel="noopener noreferrer nofollow"` を付けます。さらに PR では人間が確認し、`validate.mjs` が `<script` `<iframe` `<object` `<embed` `onxxx=` `javascript:` などを機械的に弾きます
 - **検証のすり抜けを防ぐ**：`validate.yml` は PR 側ではなく main 側の検証スクリプトを使います。fork からの PR の Actions は読み取り専用の権限で動き、秘密の値も使いません
-- **ページの CSP**：`index.html` / `edit.html` の `<meta http-equiv="Content-Security-Policy">` で、自分のサイトのスクリプト以外は動かないようにしています
+- **ページの CSP**：`index.html` / `edit.html` の `<meta http-equiv="Content-Security-Policy">` で、自分のサイトと X の埋め込み用のスクリプト以外は動かないようにしています。画像はこのサイトとスキンの顔（mc-heads.net）だけを読み込みます
 - **秘密の値はありません**：サーバーもトークンも使わないので、漏れて困る値がリポジトリにありません
-- **追跡画像のリスク**：記事には外部の画像 URL を書けるため、記事を開いた人の IP アドレスやブラウザの情報が、画像を置いているサーバーに伝わります（リファラーは送らない設定にしています）。気になる場合は `index.html` と `edit.html` の CSP の `img-src 'self' data: https:` を **`img-src 'self' data:`** に変えると、外部の画像を読み込まなくなります（画像はリポジトリの `site/` に置いたものだけ表示されます）
+- **画像・動画は埋め込みだけ**：画像は X のポスト、動画は YouTube を `[[埋め込み:URL]]` で埋め込みます。外部の画像 URL（`![](https://…)`）は表示せず、検証でもはじきます。X・YouTube は見る人が「表示する」を押したときだけ読み込むので、押すまで見る人の情報は外部に伝わりません。X の埋め込みはトラッキングを切る設定（dnt）で読み込み、YouTube は youtube-nocookie.com を使います
+- **スキンの顔**：`[[スキン:MCID]]` は mc-heads.net の画像を表示し、押すと NameMC のプロフィールを開きます。使うサイトは `site/js/config.js` の `skin` で変えられます（変えたら CSP の `img-src` も直す）
 
 ---
 
@@ -257,9 +260,9 @@ gh pr close 123 --comment "利用規約に反するため閉じました"
 | 対象 | ライセンス |
 | --- | --- |
 | サイトのプログラム | [MIT](LICENSE)（Copyright (c) 2026 ShotaXiangtai） |
-| `site/pages/` の記事と、投稿者が用意した画像 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.ja) |
+| `site/pages/` の記事の文章 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.ja) |
 | VoiceMC のロゴ・アイコン（`site/img/logo.png`、`apple-touch-icon.png`） | 対象外（運営の許可なく使えません） |
-| 本人などの許可を得て掲載した人の画像 | 対象外（記事に書かれた条件に従う） |
+| 埋め込んだ X のポスト・YouTube の動画、スキンの顔 | 対象外（それぞれの持ち主のもの） |
 | `site/js/vendor/` のライブラリ | [marked](https://github.com/markedjs/marked)（MIT）、[DOMPurify](https://github.com/cure53/DOMPurify)（Apache-2.0 / MPL-2.0）。ライセンス文は同じフォルダにあります |
 
 投稿のルールは Wiki の「利用規約」「ライセンス」のページにあります。Minecraft は Mojang Synergies AB の商標です。この Wiki は Mojang Studios・Microsoft の公式のものではなく、両社とは関係ありません。

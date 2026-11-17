@@ -24,9 +24,11 @@ SOFTWARE.
 
 This MIT License applies to the website's program code only. It does NOT cover:
 
-- Wiki articles in site/pages/ and images contributed with them, which are
-  licensed under Creative Commons Attribution-ShareAlike 4.0 International
-  (CC BY-SA 4.0) — https://creativecommons.org/licenses/by-sa/4.0/
+- The text of Wiki articles in site/pages/, which is licensed under Creative
+  Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) —
+  https://creativecommons.org/licenses/by-sa/4.0/
+- Posts and videos embedded from X and YouTube, and player skin images shown
+  from mc-heads.net. They belong to their respective owners.
 - The VoiceMC logo and icons (site/img/logo.png, site/img/apple-touch-icon.png),
   which may not be used without permission.
 - Third-party libraries in site/js/vendor/, which keep their own licenses.

@@ -148,6 +148,8 @@
         return { type: 'wikilink', raw: m[0], target: m[1], label: m[2] };
       },
       renderer: function (token) {
+        var special = renderEmbedOrSkin(token);
+        if (special != null) return special;
         var target = token.target.trim();
         var hash = '';
         var hi = target.indexOf('#');
@@ -170,6 +172,46 @@
           escapeHtml(title + '（存在しないページ）') + '">' + escapeHtml(label) + '</a>';
       },
     };
+  }
+
+  function prefixOf(s, prefixes) {
+    for (var i = 0; i < prefixes.length; i++) if (s.indexOf(prefixes[i]) === 0) return prefixes[i];
+    return null;
+  }
+
+  function fillTemplate(tpl, name, size) {
+    return tpl.replace('{name}', encodeURIComponent(name)).replace('{size}', String(size));
+  }
+
+  /**
+   * [[埋め込み:URL]]（X のポスト・YouTube の動画）と [[スキン:MCID]] / [[スキン:MCID|64]] / [[スキン:MCID|顔だけ]]
+   * それ以外の [[...]] なら null を返す。
+   * 埋め込みはここでは目印の <span> を出すだけで、カードと読み込みは postProcess / Wiki.loadEmbeds が作る。
+   */
+  function renderEmbedOrSkin(token) {
+    var raw = token.target.trim();
+    var ep = prefixOf(raw, Rules.EMBED_PREFIXES);
+    if (ep) {
+      var e = Rules.parseEmbed(raw.slice(ep.length));
+      if (!e) return '<span class="wiki-embed-error">' + escapeHtml(token.raw) + '（埋め込めない URL です。X のポストか YouTube の動画の URL を書いてください）</span>';
+      var label = e.type === 'x' ? '@' + e.user + ' の X のポスト' : 'YouTube の動画';
+      return '<span class="wiki-embed-mark"><a href="' + escapeHtml(e.url) + '">' + escapeHtml(label) + '</a></span>';
+    }
+    var sp = prefixOf(raw, Rules.SKIN_PREFIXES);
+    if (sp) {
+      var name = raw.slice(sp.length).trim();
+      if (!Rules.isMcid(name)) return '<span class="wiki-embed-error">' + escapeHtml(token.raw) + '（MCID の形が正しくありません）</span>';
+      var opt = token.label != null ? token.label.trim() : '';
+      var faceOnly = /^\d+$/.test(opt) || opt === '顔だけ';
+      var size = /^\d+$/.test(opt) ? Math.max(16, Math.min(128, parseInt(opt, 10))) : (faceOnly ? 32 : 20);
+      var skin = cfg.skin;
+      return '<a href="' + escapeHtml(fillTemplate(skin.profile, name, size)) + '" class="skin-link" title="' +
+        escapeHtml(name + '（NameMC で見る）') + '"><img class="skin-face" src="' +
+        escapeHtml(fillTemplate(skin.face, name, Math.min(256, size * 2))) + '" alt="' +
+        escapeHtml(faceOnly ? name + ' のスキンの顔' : '') + '" width="' + size + '" height="' + size + '">' +
+        (faceOnly ? '' : '<span class="skin-name">' + escapeHtml(name) + '</span>') + '</a>';
+    }
+    return null;
   }
 
   var SANITIZE_OPTIONS = {
@@ -206,14 +248,30 @@
       if ((u.protocol === 'http:' || u.protocol === 'https:') && u.origin !== location.origin) {
         a.setAttribute('rel', 'noopener noreferrer nofollow');
         a.setAttribute('target', '_blank');
-        a.classList.add('external');
+        if (!a.classList.contains('skin-link')) a.classList.add('external');
       }
     });
-    // 画像：遅延読み込み、リファラーを送らない
+    // 画像：このサイトの画像とスキンの顔だけ表示する（外部の画像サイトは使わない）
+    var skinHost = new URL(cfg.skin.face.replace('{name}', 'x').replace('{size}', '8')).host;
     frag.querySelectorAll('img').forEach(function (img) {
+      var u;
+      try { u = new URL(img.getAttribute('src') || '', location.href); } catch (e) { u = null; }
+      var allowed = u && (u.origin === location.origin || (u.protocol === 'https:' && u.host === skinHost && img.classList.contains('skin-face')));
+      if (!allowed) {
+        img.replaceWith(h('span', { class: 'external-image-blocked' },
+          '［外部の画像は表示できません。画像は X のポストを [[埋め込み:URL]] で貼ってください］'));
+        return;
+      }
       img.setAttribute('loading', 'lazy');
       img.setAttribute('decoding', 'async');
       img.setAttribute('referrerpolicy', 'no-referrer');
+    });
+    // 埋め込み：押すまで外部から読み込まないカードにする
+    frag.querySelectorAll('span.wiki-embed-mark').forEach(function (mark) {
+      var a = mark.querySelector('a[href]');
+      var e = a && Rules.parseEmbed(a.getAttribute('href'));
+      if (!e) { mark.replaceWith(document.createTextNode(mark.textContent)); return; }
+      mark.replaceWith(embedCard(e));
     });
     // 入力欄はタスクリストのチェックボックスだけ残す（操作不可）
     frag.querySelectorAll('input').forEach(function (input) {
@@ -286,6 +344,128 @@
     if (first.parentNode === frag) frag.insertBefore(toc, first);
     else frag.insertBefore(toc, frag.firstChild);
   }
+
+  // ---------------------------------------------------------------------------
+  // 埋め込み（X のポスト・YouTube の動画）。見る人が「表示する」を押すまで外部から読み込まない
+  // ---------------------------------------------------------------------------
+
+  var EMBED_SERVICES = {
+    x: { name: 'X', open: 'X で開く', note: '「表示する」を押すと、X（外部のサービス）から読み込みます。' },
+    youtube: { name: 'YouTube', open: 'YouTube で開く', note: '「表示する」を押すと、YouTube（外部のサービス）から読み込みます。' },
+  };
+
+  function embedCard(e) {
+    var svc = EMBED_SERVICES[e.type];
+    var button = h('button', { type: 'button', class: 'mw-ui-button mw-ui-progressive wiki-embed-load' }, '表示する');
+    var status = h('span', { class: 'wiki-embed-status', 'aria-live': 'polite' });
+    var title = e.type === 'x' ? '@' + e.user + ' のポスト' : '動画';
+    var wrap = h('div', { class: 'wiki-embed wiki-embed-' + e.type, 'data-embed-type': e.type, 'data-embed-id': e.id },
+      h('div', { class: 'wiki-embed-card' },
+        h('div', { class: 'wiki-embed-head' },
+          h('span', { class: 'wiki-embed-service' }, svc.name), ' ', title),
+        h('div', { class: 'wiki-embed-actions' },
+          button, ' ',
+          h('a', { href: e.url, target: '_blank', rel: 'noopener noreferrer nofollow' }, svc.open), ' ',
+          status),
+        h('p', { class: 'wiki-embed-note' }, svc.note)),
+      h('div', { class: 'wiki-embed-frame', hidden: true }));
+    button.addEventListener('click', function () {
+      Wiki.loadEmbeds(e.type, document);
+    });
+    return wrap;
+  }
+
+  var xScriptPromise = null;
+  function loadXScript() {
+    if (window.twttr && window.twttr.widgets) return Promise.resolve(window.twttr);
+    if (xScriptPromise) return xScriptPromise;
+    xScriptPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://platform.x.com/widgets.js';
+      s.async = true;
+      s.charset = 'utf-8';
+      s.onload = function () {
+        if (window.twttr && typeof window.twttr.ready === 'function') window.twttr.ready(resolve);
+        else reject(new Error('twttr not available'));
+      };
+      s.onerror = function () { reject(new Error('widgets.js failed')); };
+      document.head.appendChild(s);
+    });
+    xScriptPromise.catch(function () { xScriptPromise = null; });
+    return xScriptPromise;
+  }
+
+  function setEmbedStatus(wrap, text) {
+    var status = wrap.querySelector('.wiki-embed-status');
+    if (status) status.textContent = text;
+  }
+
+  function embedFailed(wrap, text) {
+    var button = wrap.querySelector('.wiki-embed-load');
+    if (button) { button.disabled = false; button.textContent = 'もう一度表示する'; }
+    setEmbedStatus(wrap, text);
+    wrap.classList.add('wiki-embed-failed');
+  }
+
+  function embedShown(wrap, frame) {
+    wrap.querySelector('.wiki-embed-card').hidden = true;
+    frame.hidden = false;
+    wrap.classList.add('wiki-embed-loaded');
+  }
+
+  /** root の中の、まだ読み込んでいない type の埋め込みをすべて表示する */
+  Wiki.loadEmbeds = function (type, root) {
+    var wraps = Array.prototype.slice.call((root || document).querySelectorAll(
+      '.wiki-embed[data-embed-type="' + type + '"]:not(.wiki-embed-loaded):not(.wiki-embed-loading)'));
+    wraps.forEach(function (wrap) {
+      wrap.classList.remove('wiki-embed-failed');
+      wrap.classList.add('wiki-embed-loading');
+      var button = wrap.querySelector('.wiki-embed-load');
+      if (button) { button.disabled = true; button.textContent = '読み込み中…'; }
+      setEmbedStatus(wrap, '');
+    });
+    if (!wraps.length) return;
+
+    if (type === 'youtube') {
+      wraps.forEach(function (wrap) {
+        var frame = wrap.querySelector('.wiki-embed-frame');
+        var iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(wrap.getAttribute('data-embed-id'));
+        iframe.title = 'YouTube の動画';
+        iframe.setAttribute('allow', 'accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        frame.replaceChildren(iframe);
+        wrap.classList.remove('wiki-embed-loading');
+        embedShown(wrap, frame);
+      });
+      return;
+    }
+
+    loadXScript().then(function (twttr) {
+      wraps.forEach(function (wrap) {
+        var frame = wrap.querySelector('.wiki-embed-frame');
+        frame.replaceChildren();
+        frame.hidden = false; // X の部品は見えている場所でないと大きさを決められないため、先に出しておく
+        twttr.widgets.createTweet(wrap.getAttribute('data-embed-id'), frame, {
+          dnt: true, lang: 'ja', conversation: 'none', align: 'center',
+        }).then(function (el) {
+          wrap.classList.remove('wiki-embed-loading');
+          if (el) embedShown(wrap, frame);
+          else { frame.hidden = true; embedFailed(wrap, 'ポストを表示できませんでした（削除されたか、見られない設定のポストです）。'); }
+        }, function () {
+          wrap.classList.remove('wiki-embed-loading');
+          frame.hidden = true;
+          embedFailed(wrap, 'ポストを表示できませんでした。');
+        });
+      });
+    }, function () {
+      wraps.forEach(function (wrap) {
+        wrap.classList.remove('wiki-embed-loading');
+        embedFailed(wrap, 'X を読み込めませんでした。通信状況や、広告ブロッカーなどの設定を確認してください。');
+      });
+    });
+  };
 
   /** URL の #節 へスクロールする（描画が非同期なので手動で） */
   Wiki.scrollToHash = function () {
@@ -404,6 +584,7 @@
         { text: 'おまかせ表示', href: './?special=random', id: 'n-randompage', tip: 'ページをランダムに表示' },
         { text: '新しいページを作る', href: Wiki.editUrl(''), id: 'n-newpage' },
         { text: '投稿のしかた', href: Wiki.pageUrl(cfg.howtoPage), id: 'n-howto' },
+        { text: '画像のルール', href: Wiki.pageUrl(cfg.imagesPage), id: 'n-images' },
         { text: 'Wikiの書き方', href: Wiki.pageUrl(cfg.helpPage), id: 'n-help' },
         { text: '利用規約', href: Wiki.pageUrl(cfg.termsPage), id: 'n-terms' },
       ]),
@@ -432,8 +613,8 @@
     var footer = h('footer', { id: 'footer', role: 'contentinfo' },
       h('ul', { id: 'footer-info' },
         h('li', { id: 'footer-info-license' },
-          '文章は ', h('a', { href: cfg.contentLicense.url, rel: 'license noopener noreferrer', target: '_blank' }, cfg.contentLicense.name),
-          ' のもとで利用できます（ロゴ・ゲームの画像など、別の記載があるものを除く）。詳しくは「',
+          '記事の文章は ', h('a', { href: cfg.contentLicense.url, rel: 'license noopener noreferrer', target: '_blank' }, cfg.contentLicense.name),
+          ' のもとで利用できます。埋め込んだ X のポスト・YouTube の動画・スキンの画像は、それぞれの持ち主のものです。詳しくは「',
           h('a', { href: Wiki.pageUrl(cfg.licensePage) }, 'ライセンス'), '」を見てください。'),
         h('li', null, 'この Wiki は GitHub アカウントがあれば誰でも編集を提案できます。投稿された内容は、管理者が確認してから公開されます。'),
         h('li', null, '記事の内容は投稿者によるものです。最新の情報はゲーム内やサーバーのお知らせも確認してください。'),

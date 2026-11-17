@@ -144,7 +144,7 @@ test.describe('閲覧', () => {
     const { errors } = await setup(page);
     await page.goto('/?special=all');
     await expect(page.locator('#firstHeading')).toHaveText('全ページ一覧');
-    await expect(page.locator('.mw-allpages-chunk li')).toHaveCount(6);
+    await expect(page.locator('.mw-allpages-chunk li')).toHaveCount(7);
 
     await page.locator('#searchInput').fill('サーバー');
     await page.locator('#searchInput').press('Enter');
@@ -183,6 +183,121 @@ test.describe('閲覧', () => {
     }
     await page.screenshot({ path: `${SHOTS}/04-howto.png`, fullPage: true });
     expect(errors).toEqual([]);
+  });
+});
+
+test.describe('埋め込み（X・YouTube）とスキン', () => {
+  // 1x1 の PNG（mc-heads.net の代わり）
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+
+  async function mockServices(page) {
+    const external = [];
+    page.on('request', (r) => {
+      const u = r.url();
+      if (/platform\.(x|twitter)\.com|youtube-nocookie\.com|mc-heads\.net/.test(u)) external.push(u);
+    });
+    await page.route('https://platform.x.com/widgets.js', (route) => route.fulfill({
+      contentType: 'text/javascript',
+      body: `window.twttr = { ready: function (f) { f(window.twttr); }, widgets: { createTweet: function (id, el, opts) {
+        window.__tweetOpts = opts;
+        if (id === '404') return Promise.resolve(undefined);
+        var d = document.createElement('div'); d.className = 'mock-tweet'; d.textContent = 'ポスト ' + id; el.appendChild(d);
+        return Promise.resolve(d); } } };`,
+    }));
+    await page.route('https://www.youtube-nocookie.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<p>YouTube（モック）</p>' }));
+    await page.route('https://mc-heads.net/**', (route) => route.fulfill({ contentType: 'image/png', body: PNG }));
+    return external;
+  }
+
+  const SAMPLE = [
+    '## 埋め込み',
+    '[[埋め込み:https://x.com/jack/status/20?s=20]]',
+    '',
+    '[[埋め込み:https://x.com/someone/status/404]]',
+    '',
+    '[[埋め込み:https://youtu.be/jNQXAC9IVRw]]',
+    '',
+    '[[埋め込み:https://example.com/not-allowed]]',
+    '',
+    'スキン：[[スキン:Notch]] と [[スキン:jeb_|64]]',
+    '',
+    '外部の画像：![外](https://example.com/a.png)',
+  ].join('\n');
+
+  test('押すまで外部から読み込まず、押すと X と YouTube を表示する', async ({ page, context }) => {
+    const { errors } = await setup(page, context);
+    const external = await mockServices(page);
+    await page.goto('/edit.html');
+    await page.locator('#wpTitle').fill('埋め込みのテスト');
+    await page.locator('#wpTextbox1').fill(SAMPLE);
+    await page.getByRole('tab', { name: 'プレビュー' }).click();
+    const preview = page.locator('#wikiPreview');
+
+    // カードとスキンの顔
+    await expect(preview.locator('.wiki-embed-x')).toHaveCount(2);
+    await expect(preview.locator('.wiki-embed-youtube')).toHaveCount(1);
+    await expect(preview.locator('.wiki-embed-x').first()).toContainText('@jack のポスト');
+    await expect(preview.locator('.wiki-embed-x').first().locator('a', { hasText: 'X で開く' })).toHaveAttribute('href', 'https://x.com/jack/status/20');
+    await expect(preview.locator('.wiki-embed-error')).toContainText('埋め込めない URL');
+    await expect(preview.locator('.external-image-blocked')).toHaveCount(1);
+    const skins = preview.locator('img.skin-face');
+    await expect(skins).toHaveCount(2);
+    await expect(skins.nth(0)).toHaveAttribute('src', 'https://mc-heads.net/avatar/Notch/40');
+    await expect(skins.nth(1)).toHaveAttribute('src', 'https://mc-heads.net/avatar/jeb_/128');
+    await expect(skins.nth(1)).toHaveAttribute('width', '64');
+    await expect(preview.locator('a.skin-link').first()).toHaveAttribute('href', 'https://namemc.com/profile/Notch');
+    await expect(preview.locator('a.skin-link').first()).toHaveAttribute('target', '_blank');
+    await expect(preview.locator('a.skin-link').first()).toContainText('Notch');
+    await page.screenshot({ path: `${SHOTS}/12-embed-cards.png`, fullPage: true });
+    expect(external.filter((u) => !/mc-heads\.net/.test(u)), 'X・YouTube はまだ読み込まない').toEqual([]);
+
+    // X：1 つ押すと、ページ内の X のポストをまとめて表示。消えたポストはメッセージ
+    await preview.locator('.wiki-embed-x .wiki-embed-load').first().click();
+    await expect(preview.locator('.mock-tweet')).toHaveText('ポスト 20');
+    await expect(preview.locator('.wiki-embed-x').first()).toHaveClass(/wiki-embed-loaded/);
+    await expect(preview.locator('.wiki-embed-x').nth(1).locator('.wiki-embed-status')).toContainText('削除された');
+    expect(await page.evaluate(() => window.__tweetOpts)).toMatchObject({ dnt: true, lang: 'ja' });
+    expect(external.some((u) => /youtube-nocookie/.test(u)), 'YouTube はまだ').toBe(false);
+
+    // YouTube
+    await preview.locator('.wiki-embed-youtube .wiki-embed-load').click();
+    await expect(preview.locator('.wiki-embed-youtube iframe')).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/jNQXAC9IVRw');
+    await page.screenshot({ path: `${SHOTS}/13-embed-loaded.png`, fullPage: true });
+    expect(errors).toEqual([]);
+  });
+
+  test('X を読み込めないときはメッセージを出して、もう一度押せる', async ({ page, context }) => {
+    await setup(page, context);
+    await page.route('https://platform.x.com/widgets.js', (route) => route.abort('blockedbyclient'));
+    await page.goto('/edit.html');
+    await page.locator('#wpTextbox1').fill('[[埋め込み:https://x.com/jack/status/20]]');
+    await page.getByRole('tab', { name: 'プレビュー' }).click();
+    await page.locator('#wikiPreview .wiki-embed-load').click();
+    await expect(page.locator('#wikiPreview .wiki-embed-status')).toContainText('X を読み込めませんでした');
+    await expect(page.locator('#wikiPreview .wiki-embed-load')).toHaveText('もう一度表示する');
+    await expect(page.locator('#wikiPreview .wiki-embed-load')).toBeEnabled();
+  });
+
+  test('書式ボタンで埋め込みとスキンを入れられ、おかしな URL や外部の画像はコピーの前に止める', async ({ page, context }) => {
+    await setup(page, context);
+    await page.goto('/edit.html');
+    await page.locator('#wpTitle').fill('ボタンのテスト');
+    const ta = page.locator('#wpTextbox1');
+    await ta.click();
+    await page.keyboard.type('説明');
+    await page.getByRole('button', { name: 'X・YouTube' }).click();
+    await page.keyboard.type('https://x.com/jack/status/20');
+    await page.keyboard.press('Control+End');
+    await page.getByRole('button', { name: 'スキン' }).click();
+    await page.keyboard.type('Notch');
+    expect(await ta.inputValue()).toBe('説明\n\n[[埋め込み:https://x.com/jack/status/20]]\n[[スキン:Notch]]');
+
+    await ta.fill('[[埋め込み:https://example.com/a]]');
+    await page.locator('#copy-button').click();
+    await expect(page.locator('#submit-result')).toContainText('埋め込めない URL');
+    await ta.fill('![外](https://example.com/a.png)');
+    await page.locator('#copy-button').click();
+    await expect(page.locator('#submit-result')).toContainText('外部の画像');
   });
 });
 

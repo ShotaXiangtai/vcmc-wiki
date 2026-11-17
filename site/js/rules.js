@@ -18,7 +18,37 @@
     { label: '<embed', re: /<embed/i },
     { label: 'onxxx=', re: /\bon[a-z]+\s*=/i },
     { label: 'javascript:', re: /javascript:/i },
+    { label: '外部の画像', re: /!\[[^\]\n]*\]\(\s*<?\s*(?:https?:)?\/\//i, skipCode: true },
+    { label: '外部の画像', re: /<img\b[^>]*\bsrc\s*=\s*["']?\s*(?:https?:)?\/\//i, skipCode: true },
   ];
+
+  function maskCode(text) {
+    function blank(m) { return m.replace(/[^\n]/g, ' '); }
+    return String(text)
+      .replace(/^(```|~~~)[^\n]*\n[\s\S]*?(?:\n\1[^\n]*|(?![\s\S]))/gm, blank)
+      .replace(/(`+)([\s\S]*?[^`])\1(?!`)/g, blank);
+  }
+
+  var EMBED_PREFIXES = ['埋め込み:', 'embed:'];
+  var SKIN_PREFIXES = ['スキン:', 'skin:'];
+  var X_URL = /^https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/status(?:es)?\/(\d{1,25})(?:[/?#][^\s]*)?$/i;
+  var YT_WATCH = /^https?:\/\/(?:www\.|m\.|music\.)?youtube\.com\/watch\?(?:[^\s#]*&)?v=([A-Za-z0-9_-]{11})(?:[&#][^\s]*)?$/i;
+  var YT_PATH = /^https?:\/\/(?:www\.|m\.)?youtube\.com\/(?:shorts|live|embed)\/([A-Za-z0-9_-]{11})(?:[/?#][^\s]*)?$/i;
+  var YT_SHORT = /^https?:\/\/youtu\.be\/([A-Za-z0-9_-]{11})(?:[/?#][^\s]*)?$/i;
+  var MCID = /^[A-Za-z0-9_]{1,16}$/;
+
+  function parseEmbed(url) {
+    var s = String(url || '').trim();
+    var m = X_URL.exec(s);
+    if (m) return { type: 'x', user: m[1], id: m[2], url: 'https://x.com/' + m[1] + '/status/' + m[2] };
+    m = YT_WATCH.exec(s) || YT_PATH.exec(s) || YT_SHORT.exec(s);
+    if (m) return { type: 'youtube', id: m[1], url: 'https://www.youtube.com/watch?v=' + m[1] };
+    return null;
+  }
+
+  function isMcid(name) {
+    return MCID.test(String(name || '').trim());
+  }
 
   function charLength(str) {
     return Array.from(str).length;
@@ -43,11 +73,26 @@
 
   function findForbidden(text) {
     var s = String(text);
+    var masked = maskCode(s);
     var found = [];
+    function lineOf(index) { return s.slice(0, index).split('\n').length; }
     FORBIDDEN_PATTERNS.forEach(function (p) {
-      var m = p.re.exec(s);
-      if (m) found.push({ label: p.label, line: s.slice(0, m.index).split('\n').length });
+      if (found.some(function (f) { return f.label === p.label; })) return;
+      var m = p.re.exec(p.skipCode ? masked : s);
+      if (m) found.push({ label: p.label, line: lineOf(m.index) });
     });
+    var link = /\[\[([^[\]|\n]+?)(?:\|([^[\]\n]+?))?\]\]/g;
+    var m;
+    while ((m = link.exec(masked))) {
+      var target = m[1].trim();
+      var embed = EMBED_PREFIXES.filter(function (p) { return target.indexOf(p) === 0; })[0];
+      var skin = SKIN_PREFIXES.filter(function (p) { return target.indexOf(p) === 0; })[0];
+      if (embed && !parseEmbed(target.slice(embed.length))) {
+        found.push({ label: '埋め込めない URL（X のポストか YouTube の動画だけ）', line: lineOf(m.index) });
+      } else if (skin && !isMcid(target.slice(skin.length))) {
+        found.push({ label: 'MCID の形が正しくない', line: lineOf(m.index) });
+      }
+    }
     return found;
   }
 
@@ -56,6 +101,10 @@
     CONTENT_MAX_BYTES: CONTENT_MAX_BYTES,
     SUMMARY_MAX_CHARS: SUMMARY_MAX_CHARS,
     AUTHOR_MAX_CHARS: AUTHOR_MAX_CHARS,
+    EMBED_PREFIXES: EMBED_PREFIXES,
+    SKIN_PREFIXES: SKIN_PREFIXES,
+    parseEmbed: parseEmbed,
+    isMcid: isMcid,
     charLength: charLength,
     byteLength: byteLength,
     checkTitle: checkTitle,

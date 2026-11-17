@@ -452,6 +452,80 @@ a.new:visited { color: var(--link-new-visited); }
   text-align: center;
 }
 
+/* ---- 埋め込み（X のポスト・YouTube の動画）とスキンの顔 ------------------------------ */
+.wiki-embed {
+  max-width: 550px;
+  margin: 0.8em 0;
+}
+.wiki-embed-card {
+  padding: 0.7em 1em;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background-color: var(--bg-box);
+}
+.wiki-embed-head { font-weight: bold; margin-bottom: 0.5em; }
+.wiki-embed-service {
+  display: inline-block;
+  min-width: 1.6em;
+  margin-right: 0.3em;
+  padding: 0 0.45em;
+  border-radius: 2px;
+  background-color: #000;
+  color: #fff;
+  font-size: 0.85em;
+  text-align: center;
+}
+.wiki-embed-youtube .wiki-embed-service { background-color: #c00; }
+.wiki-embed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6em;
+}
+.wiki-embed-status { color: #d33; font-size: 0.92em; }
+.mw-body-content p.wiki-embed-note {
+  margin: 0.5em 0 0;
+  font-size: 0.85em;
+  color: var(--text-subtle);
+}
+.wiki-embed-youtube .wiki-embed-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+.wiki-embed-youtube .wiki-embed-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.wiki-embed-x .wiki-embed-frame { min-height: 1px; }
+.wiki-embed-error,
+.external-image-blocked {
+  display: inline-block;
+  padding: 0 0.3em;
+  border: 1px dashed #d33;
+  color: #d33;
+  font-size: 0.92em;
+}
+
+a.skin-link,
+a.skin-link:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  color: var(--link);
+  vertical-align: middle;
+}
+.skin-face {
+  display: inline-block;
+  image-rendering: pixelated;
+  vertical-align: middle;
+  background-color: var(--bg-th);
+}
+.mw-body-content img.skin-face { max-width: none; }
+
 /* ---- 目次 ------------------------------------------------------------------- */
 .toc {
   display: table;

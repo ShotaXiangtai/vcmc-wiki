@@ -86,6 +86,8 @@
       { label: '外部リンク', title: '外部サイトへのリンク [文字](URL)', run: externalLink },
       { label: 'コード', title: 'コード（複数行なら ``` で囲む）', run: code },
       { label: '表', title: '表を挿入', run: table },
+      { label: 'X・YouTube', title: '画像は X のポスト、動画は YouTube の URL を [[埋め込み:URL]] で貼る（「画像のルール」を見てください）', run: embed },
+      { label: 'スキン', title: 'プレイヤーのスキンの顔 [[スキン:MCID]]', run: function () { wrap('[[スキン:', ']]', 'MCID'); } },
     ];
     var toolbar = h('div', { class: 'wikiEditor-toolbar', role: 'toolbar', 'aria-label': '書式' },
       tools.map(function (t) {
@@ -328,6 +330,20 @@
       } else {
         wrap('`', '`', 'コード');
       }
+    }
+
+    /** [[埋め込み:URL]] を、ほかの文と分けて 1 行で入れる（URL を選んだ状態にする） */
+    function embed() {
+      var s = textarea.selectionStart;
+      var e = textarea.selectionEnd;
+      var v = textarea.value;
+      var sel = v.slice(s, e).trim();
+      var url = /^https?:\/\/\S+$/.test(sel) ? sel : 'https://x.com/';
+      var before = (s > 0 && v.charAt(s - 1) !== '\n') ? '\n\n' : '';
+      var text = before + '[[埋め込み:' + url + ']]\n';
+      replaceRange(s, e, text);
+      var urlStart = s + before.length + '[[埋め込み:'.length;
+      textarea.setSelectionRange(urlStart, urlStart + url.length);
     }
 
     function table() {

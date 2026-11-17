@@ -11,8 +11,15 @@ window.WIKI_CONFIG = {
   howtoPage: '投稿のしかた',
   termsPage: '利用規約',
   licensePage: 'ライセンス',
-  // 記事のライセンス
+  imagesPage: '画像のルール',
+  // 記事のライセンス（文章だけ。画像・動画は X / YouTube の埋め込みで、それぞれの持ち主のもの）
   contentLicense: { name: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja' },
+  // [[スキン:MCID]] で使う、スキンの顔の画像と、押したときに開くページ（{name} と {size} が置き換わる）
+  // 画像のサイトを変えたときは、index.html と edit.html の CSP の img-src も直す
+  skin: {
+    face: 'https://mc-heads.net/avatar/{name}/{size}',
+    profile: 'https://namemc.com/profile/{name}',
+  },
   // 左メニューの「リンク」欄（不要なら [] にする）
   sidebarLinks: [
     { text: '公式サイト', url: 'https://www.vcmc.jp/' },
