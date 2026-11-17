@@ -144,7 +144,7 @@ test.describe('閲覧', () => {
     const { errors } = await setup(page);
     await page.goto('/?special=all');
     await expect(page.locator('#firstHeading')).toHaveText('全ページ一覧');
-    await expect(page.locator('.mw-allpages-chunk li')).toHaveCount(9);
+    await expect(page.locator('.mw-allpages-chunk li')).toHaveCount(13);
 
     await page.locator('#searchInput').fill('サーバー');
     await page.locator('#searchInput').press('Enter');
@@ -187,12 +187,17 @@ test.describe('閲覧', () => {
 });
 
 test.describe('かんたん版', () => {
-  test('利用規約・ライセンスのかんたん版があり、正式版・フッター・編集画面から行ける', async ({ page, context }) => {
+  const PAIRS = [
+    ['利用規約', '利用規約（かんたん版）', 'みんなで仲よく'],
+    ['ライセンス', 'ライセンス（かんたん版）', 'だれでも自由に使っていいよ'],
+    ['画像のルール', '画像のルール（かんたん版）', '人の絵を勝手に使わない'],
+    ['Wikiの書き方', 'Wikiの書き方（かんたん版）', 'ふつうに文章を書けば OK'],
+    ['投稿のしかた', '投稿のしかた（かんたん版）', 'ボタンを押すだけ'],
+  ];
+
+  test('正式版の一番上から、それぞれのかんたん版に行ける', async ({ page, context }) => {
     const { errors } = await setup(page, context);
-    for (const [formal, easy, words] of [
-      ['利用規約', '利用規約（かんたん版）', 'みんなで仲よく'],
-      ['ライセンス', 'ライセンス（かんたん版）', 'だれでも自由に使っていいよ'],
-    ]) {
+    for (const [formal, easy, words] of PAIRS) {
       await page.goto(`/?p=${enc(formal)}`);
       const callout = page.locator('#mw-content-text > blockquote').first();
       await expect(callout).toContainText('むずかしい文章が苦手な人は');
@@ -200,14 +205,36 @@ test.describe('かんたん版', () => {
       await expect(page.locator('#firstHeading')).toHaveText(easy);
       await expect(page.locator('#mw-content-text')).toContainText(words);
       await expect(page.locator('#mw-content-text a', { hasText: formal }).first()).toHaveAttribute('href', `./?p=${enc(formal)}`);
-      await expect(page.locator('#mw-content-text a.new')).toHaveCount(0); // 赤リンクがない
-      await expect(page.locator('#footer-places a', { hasText: easy })).toBeVisible();
+      await expect(page.locator('#mw-content-text a.new'), `${easy} に赤リンクがない`).toHaveCount(0);
     }
-    await page.screenshot({ path: `${SHOTS}/14-license-easy.png`, fullPage: true });
-    await page.goto(`/?p=${enc('利用規約（かんたん版）')}`);
-    await page.screenshot({ path: `${SHOTS}/15-terms-easy.png`, fullPage: true });
+    expect(errors).toEqual([]);
+  });
+
+  test('まとめページ・メニュー・フッター・編集画面から行ける。かんたん版の投稿のしかたの画像も出る', async ({ page, context }) => {
+    const { errors } = await setup(page, context);
+    await page.goto('/');
+    await expect(page.locator('#n-easy a')).toHaveText('かんたん版（はじめての人へ）');
+    await expect(page.locator('#footer-places a', { hasText: 'かんたん版' })).toHaveAttribute('href', `./?p=${enc('かんたん版')}`);
+    await page.locator('#n-easy a').click();
+    await expect(page.locator('#firstHeading')).toHaveText('かんたん版');
+    for (const [formal, easy] of PAIRS) {
+      await expect(page.locator('#mw-content-text a.wikilink:not(.new)', { hasText: easy })).toHaveCount(1);
+      await expect(page.locator('#mw-content-text a.wikilink:not(.new)').filter({ hasText: new RegExp(`^${formal}$`) })).toHaveCount(1);
+    }
+    await page.screenshot({ path: `${SHOTS}/14-easy-hub.png`, fullPage: true });
+
+    await page.goto(`/?p=${enc('投稿のしかた（かんたん版）')}`);
+    const imgs = page.locator('#mw-content-text img');
+    await expect(imgs).toHaveCount(3);
+    for (const img of await imgs.all()) {
+      await img.scrollIntoViewIfNeeded();
+      await expect.poll(() => img.evaluate((i) => i.complete && i.naturalWidth)).toBeGreaterThan(0);
+    }
+    await page.screenshot({ path: `${SHOTS}/15-howto-easy.png`, fullPage: true });
+
     await page.goto('/edit.html');
     await expect(page.locator('.edit-legal a', { hasText: '利用規約のかんたん版' })).toHaveAttribute('href', `./?p=${enc('利用規約（かんたん版）')}`);
+    await expect(page.locator('.editnotice a', { hasText: 'かんたん版' })).toHaveAttribute('href', `./?p=${enc('Wikiの書き方（かんたん版）')}`);
     expect(errors).toEqual([]);
   });
 });

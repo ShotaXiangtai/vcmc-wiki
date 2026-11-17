@@ -24,6 +24,7 @@ export const PROTECTED_PAGES = [
   'site/pages/利用規約（かんたん版）.md',
   'site/pages/ライセンス（かんたん版）.md',
   'site/pages/画像のルール.md',
+  'site/pages/画像のルール（かんたん版）.md',
 ];
 
 // プルリクの説明欄（.github/pull_request_template.md）の確認項目。各行の [ ] が [x] になっている必要がある

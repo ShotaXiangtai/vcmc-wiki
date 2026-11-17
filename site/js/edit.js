@@ -153,7 +153,8 @@
         : null,
       Wiki.messageBox('info', [
         'GitHub アカウントがあれば誰でも編集を提案できます。ここで書いてプレビューしたあと、下の手順で GitHub から投稿してください。',
-        '書き方は ', h('a', { href: Wiki.pageUrl(cfg.helpPage), target: '_blank' }, 'Wikiの書き方'), ' を見てください。',
+        '書き方は ', h('a', { href: Wiki.pageUrl(cfg.helpPage), target: '_blank' }, 'Wikiの書き方'),
+        '（', h('a', { href: Wiki.pageUrl(cfg.helpEasyPage), target: '_blank' }, 'かんたん版'), '）を見てください。',
       ], { class: 'editnotice' }),
       h('div', { class: 'edit-field' }, h('label', { for: 'wpTitle' }, 'ページ名'), titleInput, titleHint),
       h('div', { class: 'edit-tabs', role: 'tablist', 'aria-label': '編集とプレビュー' }, tabEdit, tabPreview),

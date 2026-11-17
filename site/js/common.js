@@ -580,6 +580,7 @@
           cfg.siteTagline ? h('span', { class: 'logo-tagline' }, cfg.siteTagline) : null)),
       portal('p-navigation', null, [
         { text: 'メインページ', href: './', id: 'n-mainpage' },
+        { text: 'かんたん版（はじめての人へ）', href: Wiki.pageUrl(cfg.easyPage), id: 'n-easy' },
         { text: '全ページ一覧', href: './?special=all', id: 'n-allpages' },
         { text: 'おまかせ表示', href: './?special=random', id: 'n-randompage', tip: 'ページをランダムに表示' },
         { text: '新しいページを作る', href: Wiki.editUrl(''), id: 'n-newpage' },
@@ -621,9 +622,8 @@
         h('li', { id: 'footer-info-minecraft' }, 'Minecraft は Mojang Synergies AB の商標です。この Wiki は Mojang Studios・Microsoft の公式のものではなく、両社とは関係ありません。')),
       h('ul', { id: 'footer-places' },
         h('li', null, h('a', { href: Wiki.pageUrl(cfg.termsPage) }, '利用規約')),
-        h('li', null, h('a', { href: Wiki.pageUrl(cfg.termsEasyPage) }, '利用規約（かんたん版）')),
         h('li', null, h('a', { href: Wiki.pageUrl(cfg.licensePage) }, 'ライセンス')),
-        h('li', null, h('a', { href: Wiki.pageUrl(cfg.licenseEasyPage) }, 'ライセンス（かんたん版）')),
+        h('li', null, h('a', { href: Wiki.pageUrl(cfg.easyPage) }, 'かんたん版')),
         h('li', null, h('a', { href: Wiki.pageUrl(cfg.howtoPage) }, '投稿のしかた')),
         h('li', null, h('a', { href: Wiki.pageUrl(cfg.helpPage) }, 'Wikiの書き方')),
         h('li', null, h('a', { href: './?special=all' }, '全ページ一覧')),
