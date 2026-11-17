@@ -43,7 +43,13 @@ const server = createServer(async (req, res) => {
       info = await stat(file).catch(() => null);
     }
     if (!info || !info.isFile()) {
-      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('404 Not Found');
+      // GitHub Pages と同じく、見つからないときは site/404.html を 404 で返す
+      const notFound = await readFile(join(siteDir, '404.html')).catch(() => null);
+      if (notFound) {
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }).end(notFound);
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('404 Not Found');
+      }
       return;
     }
     const body = await readFile(file);

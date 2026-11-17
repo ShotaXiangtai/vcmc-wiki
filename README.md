@@ -31,6 +31,7 @@ Minecraft サーバー「VoiceMC」のプレイヤー向け攻略・ルール集
 site/                        GitHub Pages で公開するもの
   index.html                 閲覧（?p=ページ名 / ?special=all / ?special=random / ?search=語）
   edit.html                  編集・プレビュー・投稿の手順
+  404.html                   見つからない URL のページ（404 を 3 回クリック・↑↑↓↓←→←→BA・#games で、かくしミニゲームが開く）
   css/wiki.css               Wikipedia 風のスタイル
   img/logo.png               ロゴ・ファビコン（公式サイトと同じアイコン。192×192 の透過 PNG）
   img/apple-touch-icon.png   スマホのホーム画面用アイコン（180×180）
@@ -39,6 +40,7 @@ site/                        GitHub Pages で公開するもの
   js/common.js               画面の枠と Markdown の描画（marked + DOMPurify）
   js/rules.js                ページ名などのルール（scripts/rules.mjs と同じ内容）
   js/view.js / edit.js       閲覧画面 / 編集画面
+  js/notfound.js / games.js  404 ページ / かくしミニゲーム（ほりほりチャレンジ・よけろ！落ちブロック・鉱石あわせ・はんのう速度）
   js/vendor/                 marked と DOMPurify（CDN は使わず同梱）
   pages/*.md                 記事。ファイル名がそのままページ名（日本語 OK）
 scripts/

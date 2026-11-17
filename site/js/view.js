@@ -81,6 +81,8 @@
       h('ul', null,
         h('li', null, h('a', { href: Wiki.editUrl(title), id: 'create-page-link', class: 'new' }, 'このページを作成する')),
         h('li', null, h('a', { href: './?search=' + encodeURIComponent(title) }, '「' + title + '」を含むページを検索する'))),
+      // かくし入口（404 ページのミニゲームへ）
+      h('a', { href: '404.html#games', class: 'secret-games-link', title: '…？', 'aria-label': 'ひみつのゲームセンター' }, '⛏'),
     ], { class: 'noarticletext' }));
   }
 

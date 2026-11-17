@@ -538,6 +538,160 @@ a.skin-link:visited {
 }
 .mw-body-content img.skin-face { max-width: none; }
 
+/* ---- 404 ページとかくしゲーム -------------------------------------------------------- */
+canvas.pixel { image-rendering: pixelated; }
+.notfound {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5em 2em;
+  margin: 0.5em 0 1.5em;
+}
+.notfound-art {
+  max-width: 100%;
+  height: auto;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.notfound-art.shake { animation: notfound-shake 0.35s; }
+@keyframes notfound-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  25% { transform: translate(-3px, 1px) rotate(-1.5deg); }
+  50% { transform: translate(3px, -1px) rotate(1.5deg); }
+  75% { transform: translate(-2px, 0) rotate(-1deg); }
+}
+.notfound-text { flex: 1 1 18em; }
+.mw-body-content p.notfound-hint {
+  margin-top: 2.5em;
+  color: #c8ccd1;
+  font-size: 0.8em;
+  text-align: right;
+}
+a.secret-games-link,
+a.secret-games-link:visited {
+  float: right;
+  color: #c8ccd1;
+  text-decoration: none;
+  font-size: 0.85em;
+}
+a.secret-games-link:hover { color: var(--link); }
+
+.secret-games {
+  margin: 1em 0;
+  padding: 1em 1.25em 1.5em;
+  border: 1px solid var(--border);
+  background-color: var(--bg-box);
+}
+.mw-body-content .games-title { margin-top: 0; }
+.games-lead { color: var(--text-subtle); }
+.games-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5em, 1fr));
+  gap: 8px;
+  margin: 0.8em 0 1em;
+}
+.games-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-weight: bold;
+  text-align: left;
+  cursor: pointer;
+}
+.games-menu-item:hover { border-color: var(--progressive); }
+.games-menu-item[aria-pressed="true"] {
+  border-color: var(--progressive);
+  box-shadow: inset 0 0 0 1px var(--progressive);
+}
+.game-stage {
+  padding: 0.8em 1em 1em;
+  border: 1px solid var(--border-light);
+  background: #fff;
+  text-align: center;
+}
+.mw-body-content .game-name { margin-top: 0; padding-top: 0; }
+.game-howto { color: var(--text-subtle); text-align: left; }
+.game-hud { margin: 0.6em 0; font-weight: bold; font-variant-numeric: tabular-nums; }
+.game-info { min-height: 1.6em; font-weight: bold; color: #14866d; }
+.game-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 0.6em 0;
+}
+.game-mine-block {
+  width: 160px;
+  height: 160px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.05s;
+}
+.game-mine-block:active { transform: scale(0.96); }
+.game-dodge-canvas {
+  width: 300px;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  touch-action: none;
+}
+.game-pad { min-width: 3.5em; touch-action: none; }
+.game-memory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 64px);
+  justify-content: center;
+  gap: 8px;
+  margin: 0.5em 0;
+}
+.game-card {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: linear-gradient(135deg, #3366cc, #2a4b8d);
+  color: #fff;
+  font: inherit;
+  font-size: 1.4em;
+  font-weight: bold;
+  cursor: pointer;
+}
+.game-card .game-card-face { display: none; }
+.game-card.open,
+.game-card.done { background: #fff; }
+.game-card.open .game-card-back,
+.game-card.done .game-card-back { display: none; }
+.game-card.open .game-card-face,
+.game-card.done .game-card-face { display: inline-block; }
+.game-card.done { opacity: 0.55; cursor: default; }
+.game-card canvas { display: block; margin: 7px; }
+.game-reaction-panel {
+  width: 100%;
+  max-width: 420px;
+  min-height: 160px;
+  margin: 0.5em auto;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font: inherit;
+  font-size: 1.3em;
+  font-weight: bold;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.game-reaction-panel.idle,
+.game-reaction-panel.done { background: var(--bg-th); color: var(--text); }
+.game-reaction-panel.waiting { background: #b32424; color: #fff; }
+.game-reaction-panel.ready { background: #14866d; color: #fff; }
+@media (prefers-reduced-motion: reduce) {
+  .notfound-art.shake { animation: none; }
+}
+
 /* ---- 目次 ------------------------------------------------------------------- */
 .toc {
   display: table;

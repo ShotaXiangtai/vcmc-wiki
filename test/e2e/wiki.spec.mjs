@@ -186,6 +186,107 @@ test.describe('閲覧', () => {
   });
 });
 
+test.describe('404 とかくしゲーム', () => {
+  const only404 = (errors) => errors.filter((e) => !/status of 404/.test(e));
+
+  test('存在しない URL では 404 ページを出し、リンクはサイトの一番上を基準に動く', async ({ page }) => {
+    const { errors } = await setup(page);
+    const res = await page.goto(`/foo/${enc('はじめかた')}`);
+    expect(res.status()).toBe(404);
+    await expect(page.locator('#firstHeading')).toHaveText('ページが見つかりません');
+    await expect(page.locator('.notfound-art')).toBeVisible();
+    await expect(page.locator('#secret-games')).toBeHidden();
+    await expect(page.locator('.notfound a', { hasText: '「はじめかた」を検索する' })).toBeVisible();
+    await expect(page.locator('.notfound-hint')).toContainText('404 をよく見ると');
+    await page.screenshot({ path: `${SHOTS}/17-404.png`, fullPage: true });
+    await page.locator('.notfound a', { hasText: 'メインページへ行く' }).click();
+    await expect(page).toHaveURL('http://localhost:8000/');
+    await expect(page.locator('#firstHeading')).toHaveText('メインページ');
+    expect(only404(errors)).toEqual([]);
+  });
+
+  test('404 を 3 回クリックするとゲームセンターが開き、ほりほりチャレンジで遊べる', async ({ page }) => {
+    const { errors } = await setup(page);
+    await page.goto('/no-such-page');
+    const art = page.locator('.notfound-art');
+    await art.click();
+    await art.click();
+    await expect(page.locator('#secret-games')).toBeHidden();
+    await art.click();
+    await expect(page.locator('#secret-games')).toBeVisible();
+    await expect(page.locator('.games-menu-item')).toHaveCount(4);
+    await expect(page.locator('#game-mine')).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'スタート' }).click();
+    const block = page.locator('.game-mine-block');
+    for (let i = 0; i < 25; i++) await block.click();
+    await expect(page.locator('.game-hud')).not.toContainText('スコア 0　');
+    await expect(page.locator('.game-info')).toContainText('を掘った！');
+    await page.screenshot({ path: `${SHOTS}/18-games-mine.png`, fullPage: true });
+    expect(only404(errors)).toEqual([]);
+  });
+
+  test('↑↑↓↓←→←→BA でも開く', async ({ page }) => {
+    await setup(page);
+    await page.goto('/no-such-page');
+    for (const k of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) {
+      await page.keyboard.press(k);
+    }
+    await expect(page.locator('#secret-games')).toBeVisible();
+  });
+
+  test('#games で開き、よけろ・鉱石あわせ・はんのう速度も遊べる', async ({ page }) => {
+    const { errors } = await setup(page);
+    await page.goto('/404.html#games');
+    await expect(page.locator('#secret-games')).toBeVisible();
+
+    // よけろ！落ちブロック
+    await page.locator('#game-dodge').click();
+    await page.getByRole('button', { name: 'スタート' }).click();
+    await page.keyboard.down('ArrowLeft');
+    await page.waitForTimeout(700);
+    await page.keyboard.up('ArrowLeft');
+    await expect(page.locator('.game-hud')).not.toContainText('スコア 0　');
+    await page.screenshot({ path: `${SHOTS}/19-games-dodge.png` });
+
+    // 鉱石あわせ（答えを見て全部そろえる）
+    await page.locator('#game-memory').click();
+    const cards = page.locator('.game-card');
+    await expect(cards).toHaveCount(16);
+    const ores = await cards.evaluateAll((els) => els.map((e) => e.getAttribute('data-ore')));
+    const done = new Set();
+    for (let i = 0; i < ores.length; i++) {
+      if (done.has(i)) continue;
+      const j = ores.findIndex((o, k) => k !== i && o === ores[i]);
+      await cards.nth(i).click();
+      await cards.nth(j).click();
+      done.add(i); done.add(j);
+    }
+    await expect(page.locator('.game-info')).toContainText('8 回でクリア');
+    await page.screenshot({ path: `${SHOTS}/20-games-memory.png` });
+
+    // はんのう速度
+    await page.locator('#game-reaction').click();
+    const panel = page.locator('.game-reaction-panel');
+    await panel.click();
+    await expect(panel).toHaveClass(/ready/, { timeout: 6000 });
+    await panel.click();
+    await expect(page.locator('.game-info')).toContainText('ミリ秒');
+    expect(only404(errors)).toEqual([]);
+  });
+
+  test('記事がない画面のかくし入口（⛏）からも行ける。スマホでもはみ出さない', async ({ page }) => {
+    await setup(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/?p=${enc('まだ無いページ')}`);
+    await page.locator('a.secret-games-link').click();
+    await expect(page).toHaveURL(/404.html#games$/);
+    await expect(page.locator('#secret-games')).toBeVisible();
+    await page.locator('#game-memory').click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    await page.screenshot({ path: `${SHOTS}/21-games-mobile.png`, fullPage: true });
+  });
+});
+
 test.describe('テストページ', () => {
   test('できることの見本が全部表示され、メニューから行ける', async ({ page, context }) => {
     const { errors } = await setup(page, context);
