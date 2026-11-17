@@ -338,6 +338,18 @@ a.new:visited { color: var(--link-new-visited); }
   color: var(--text-subtle);
 }
 #contentSub:empty { margin-bottom: 0.6em; }
+.copy-source {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font: inherit;
+  cursor: pointer;
+}
+.copy-source::before { content: '📋 '; }
+.copy-source:hover { text-decoration: underline; }
+.copy-source-status { color: var(--text-subtle); }
+.copy-source-status.done { color: #14866d; }
 
 .mw-body-content {
   position: relative;

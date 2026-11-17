@@ -144,7 +144,7 @@ test.describe('閲覧', () => {
     const { errors } = await setup(page);
     await page.goto('/?special=all');
     await expect(page.locator('#firstHeading')).toHaveText('全ページ一覧');
-    await expect(page.locator('.mw-allpages-chunk li')).toHaveCount(13);
+    await expect(page.locator('.mw-allpages-chunk li')).toHaveCount(14);
 
     await page.locator('#searchInput').fill('サーバー');
     await page.locator('#searchInput').press('Enter');
@@ -182,6 +182,43 @@ test.describe('閲覧', () => {
       await expect.poll(() => img.evaluate((i) => i.complete && i.naturalWidth)).toBeGreaterThan(0);
     }
     await page.screenshot({ path: `${SHOTS}/04-howto.png`, fullPage: true });
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('テストページ', () => {
+  test('できることの見本が全部表示され、メニューから行ける', async ({ page, context }) => {
+    const { errors } = await setup(page, context);
+    const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+    await page.route('https://mc-heads.net/**', (route) => route.fulfill({ contentType: 'image/png', body: PNG }));
+    await page.route('https://platform.x.com/widgets.js', (route) => route.fulfill({
+      contentType: 'text/javascript',
+      body: "window.twttr={ready:function(f){f(window.twttr)},widgets:{createTweet:function(id,el){var d=document.createElement('div');d.className='mock-tweet';d.textContent='ポスト '+id;el.appendChild(d);return Promise.resolve(d)}}};",
+    }));
+    await page.goto('/');
+    await expect(page.locator('#n-test a')).toHaveText('テストページ（練習用）');
+    await page.locator('#n-test a').click();
+    await expect(page.locator('#firstHeading')).toHaveText('テストページ');
+    const body = page.locator('#mw-content-text');
+    await expect(body.locator('#toc')).toBeVisible();
+    await expect(body.locator('strong', { hasText: '太字' }).first()).toBeVisible();
+    await expect(body.locator('em', { hasText: 'ななめ' })).toBeVisible();
+    await expect(body.locator('del', { hasText: '打ち消し線' })).toBeVisible();
+    await expect(body.locator('input[type="checkbox"]')).toHaveCount(2);
+    await expect(body.locator('a.wikilink.new', { hasText: 'まだ誰も書いていないページ' })).toBeVisible();
+    await expect(body.locator('a.external', { hasText: '公式サイト' })).toBeVisible();
+    await expect(body.locator('table.wikitable')).toBeVisible();
+    await expect(body.locator('.wiki-embed-x')).toHaveCount(1);
+    await expect(body.locator('.wiki-embed-youtube')).toHaveCount(1);
+    await expect(body.locator('img.skin-face')).toHaveCount(4);
+    // 本文（Markdown）をそのままコピーできる
+    await page.locator('#copy-source').click();
+    await expect(page.locator('.copy-source-status')).toContainText('コピーしました');
+    const md = await page.evaluate(() => fetch('pages/' + encodeURIComponent('テストページ') + '.md').then((r) => r.text()));
+    expect(await readClipboard(page)).toBe(md.split(String.fromCharCode(13)).join(''));
+    await body.locator('.wiki-embed-x .wiki-embed-load').click();
+    await expect(body.locator('.mock-tweet')).toHaveText('ポスト 20');
+    await page.screenshot({ path: `${SHOTS}/16-test-page.png`, fullPage: true });
     expect(errors).toEqual([]);
   });
 });

@@ -50,9 +50,26 @@
       var view = Wiki.layout({ page: title, exists: true, active: 'view', showSiteSub: true });
       view.heading.textContent = title;
       Wiki.setDocTitle(title === cfg.mainPage ? '' : title);
+      view.sub.append(copySourceButton(page.src));
       Wiki.renderInto(view.body, page.src, pageSet);
       Wiki.scrollToHash();
     });
+  }
+
+  /** 記事の本文（Markdown）をそのままコピーするボタン。新しいページに貼って試せるように */
+  function copySourceButton(src) {
+    var status = h('span', { class: 'copy-source-status', 'aria-live': 'polite' });
+    var button = h('button', { type: 'button', id: 'copy-source', class: 'copy-source', title: 'この記事の本文（Markdown）をコピーします。編集画面に貼れば、そのまま使えます' },
+      '本文をコピー（Markdown）');
+    button.addEventListener('click', function () {
+      Wiki.copyText(String(src).replace(/\r\n?/g, '\n')).then(function (ok) {
+        status.textContent = ok
+          ? '✔ コピーしました。編集画面に貼り付けて使えます'
+          : 'コピーできませんでした。「編集」タブを開いて、本文を選んでコピーしてください';
+        status.classList.toggle('done', ok);
+      });
+    });
+    return h('span', { class: 'copy-source-wrap' }, button, ' ', status);
   }
 
   function showMissing(title) {

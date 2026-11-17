@@ -15,6 +15,7 @@ window.WIKI_CONFIG = {
   licenseEasyPage: 'ライセンス（かんたん版）',
   helpEasyPage: 'Wikiの書き方（かんたん版）',
   easyPage: 'かんたん版',
+  testPage: 'テストページ',
   imagesPage: '画像のルール',
   // 記事のライセンス（文章だけ。画像・動画は X / YouTube の埋め込みで、それぞれの持ち主のもの）
   contentLicense: { name: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja' },

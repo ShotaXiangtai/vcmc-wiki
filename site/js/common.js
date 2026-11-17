@@ -345,6 +345,24 @@
     else frag.insertBefore(toc, frag.firstChild);
   }
 
+  /** 文字をクリップボードにコピーする。成功したら true（Promise） */
+  Wiki.copyText = function (text) {
+    function legacy() {
+      var helper = h('textarea', { class: 'clipboard-helper', readonly: true, 'aria-hidden': 'true', tabindex: '-1' });
+      helper.value = text;
+      document.body.appendChild(helper);
+      helper.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      helper.remove();
+      return ok;
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacy(); });
+    }
+    return Promise.resolve(legacy());
+  };
+
   // ---------------------------------------------------------------------------
   // 埋め込み（X のポスト・YouTube の動画）。見る人が「表示する」を押すまで外部から読み込まない
   // ---------------------------------------------------------------------------
@@ -587,6 +605,7 @@
         { text: '投稿のしかた', href: Wiki.pageUrl(cfg.howtoPage), id: 'n-howto' },
         { text: '画像のルール', href: Wiki.pageUrl(cfg.imagesPage), id: 'n-images' },
         { text: 'Wikiの書き方', href: Wiki.pageUrl(cfg.helpPage), id: 'n-help' },
+        { text: 'テストページ（練習用）', href: Wiki.pageUrl(cfg.testPage), id: 'n-test' },
         { text: '利用規約', href: Wiki.pageUrl(cfg.termsPage), id: 'n-terms' },
       ]),
       portal('p-tb', 'ツール', toolItems),
