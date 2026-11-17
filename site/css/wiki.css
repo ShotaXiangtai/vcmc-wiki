@@ -688,8 +688,175 @@ a.secret-games-link:hover { color: var(--link); }
 .game-reaction-panel.done { background: var(--bg-th); color: var(--text); }
 .game-reaction-panel.waiting { background: #b32424; color: #fff; }
 .game-reaction-panel.ready { background: #14866d; color: #fff; }
+/* 共通 */
+.game-modes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 0.6em;
+}
+.game-modes .mw-ui-button[aria-pressed="true"] {
+  border-color: var(--progressive);
+  box-shadow: inset 0 0 0 1px var(--progressive);
+  color: var(--progressive);
+}
+.game-canvas {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  touch-action: none;
+}
+.game-actions-wrap { flex-wrap: wrap; }
+.game-cps {
+  min-height: 1.4em;
+  margin-top: 0.3em;
+  font-size: 1.6em;
+  font-weight: bold;
+  color: var(--progressive);
+  font-variant-numeric: tabular-nums;
+}
+
+/* どかんさがし */
+.game-sweeper-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 9), minmax(0, 30px));
+  justify-content: center;
+  gap: 2px;
+  margin: 0.5em auto;
+  max-width: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.sw-cell {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid #4a7a2c;
+  border-radius: 2px;
+  background: linear-gradient(#5aa83a 0 30%, #86592f 30%);
+  color: #202122;
+  font: inherit;
+  font-size: 0.95em;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.sw-cell:hover:not(.open) { filter: brightness(1.12); }
+.sw-cell.open { background: #e4dccb; border-color: #c9bfa8; cursor: default; }
+.sw-cell.flag { background: linear-gradient(#5aa83a 0 30%, #86592f 30%); }
+.sw-cell.mine { background: #f4d6d6; }
+.sw-cell.boom { background: #d33; }
+.sw-cell[data-n="1"] { color: #1f4fbf; }
+.sw-cell[data-n="2"] { color: #14866d; }
+.sw-cell[data-n="3"] { color: #c62828; }
+.sw-cell[data-n="4"] { color: #283593; }
+.sw-cell[data-n="5"] { color: #8d2a0b; }
+.sw-cell[data-n="6"] { color: #00838f; }
+.sw-cell[data-n="7"],
+.sw-cell[data-n="8"] { color: #202122; }
+
+/* つみつみ鉱石 */
+.game-stack-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+}
+.game-stack-wrap .game-canvas { margin: 0; }
+.game-stack-side {
+  font-weight: bold;
+  color: var(--text-subtle);
+}
+.game-stack-next {
+  display: block;
+  margin-top: 4px;
+  border: 1px solid var(--border-light);
+  background: #1f232c;
+}
+
+/* トロッコれっしゃ */
+.game-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 3.2em);
+  grid-template-rows: repeat(3, 2.6em);
+  justify-content: center;
+  gap: 4px;
+  margin: 0.6em 0;
+}
+.game-dpad .game-pad { min-width: 0; padding: 0; }
+.game-dpad .game-pad:nth-child(1) { grid-column: 2; grid-row: 1; }
+.game-dpad .game-pad:nth-child(2) { grid-column: 1; grid-row: 2; }
+.game-dpad .game-pad:nth-child(3) { grid-column: 3; grid-row: 2; }
+.game-dpad .game-pad:nth-child(4) { grid-column: 2; grid-row: 3; }
+
+/* スライムたたき */
+.game-whack {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 96px));
+  justify-content: center;
+  gap: 10px;
+  margin: 0.6em 0;
+}
+.whack-hole {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #5a4630;
+  border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 78%, #2b1d10 0 32%, #6b4a2b 34%, #86592f 70%);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.whack-slime {
+  position: absolute;
+  left: 20%;
+  bottom: -60%;
+  width: 60%;
+  height: 52%;
+  border-radius: 45% 45% 30% 30%;
+  background: #7ed957;
+  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.15);
+  transition: bottom 0.12s;
+}
+.whack-slime::before,
+.whack-slime::after {
+  content: '';
+  position: absolute;
+  top: 34%;
+  width: 14%;
+  height: 22%;
+  border-radius: 50%;
+  background: #1d3b12;
+}
+.whack-slime::before { left: 26%; }
+.whack-slime::after { right: 26%; }
+.whack-hole.up.slime .whack-slime,
+.whack-hole.up.gold .whack-slime { bottom: 18%; }
+.whack-hole.gold .whack-slime { background: #f5d33b; }
+.whack-hole.gold .whack-slime::before,
+.whack-hole.gold .whack-slime::after { background: #6b4a00; }
+.whack-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2em;
+}
+.whack-hole.hit { animation: whack-hit 0.18s; }
+@keyframes whack-hit {
+  50% { transform: scale(0.92); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .notfound-art.shake { animation: none; }
+  .whack-slime { transition: none; }
+  .whack-hole.hit { animation: none; }
 }
 
 /* ---- 目次 ------------------------------------------------------------------- */

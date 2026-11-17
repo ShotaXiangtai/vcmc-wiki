@@ -214,7 +214,7 @@ test.describe('404 とかくしゲーム', () => {
     await expect(page.locator('#secret-games')).toBeHidden();
     await art.click();
     await expect(page.locator('#secret-games')).toBeVisible();
-    await expect(page.locator('.games-menu-item')).toHaveCount(4);
+    await expect(page.locator('.games-menu-item')).toHaveCount(10);
     await expect(page.locator('#game-mine')).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'スタート' }).click();
     const block = page.locator('.game-mine-block');
@@ -271,6 +271,90 @@ test.describe('404 とかくしゲーム', () => {
     await expect(panel).toHaveClass(/ready/, { timeout: 6000 });
     await panel.click();
     await expect(page.locator('.game-info')).toContainText('ミリ秒');
+    expect(only404(errors)).toEqual([]);
+  });
+
+  test('ほりほりチャレンジの CPS 測定', async ({ page }) => {
+    const { errors } = await setup(page);
+    await page.goto('/404.html#games');
+    await page.getByRole('button', { name: 'CPS測定（10秒）' }).click();
+    await page.getByRole('button', { name: 'スタート' }).click();
+    const block = page.locator('.game-mine-block');
+    for (let i = 0; i < 20; i++) await block.click();
+    await expect(page.locator('.game-hud')).toContainText('クリック 20 回');
+    await expect(page.locator('.game-cps')).toContainText('CPS');
+    expect(Number((await page.locator('.game-hud').textContent()).match(/最高 (\d+) CPS/)[1])).toBeGreaterThan(0);
+    expect(only404(errors)).toEqual([]);
+  });
+
+  test('どかんさがし：最初のマスは安全で、はたを立てられ、むずかしさを変えられる', async ({ page }) => {
+    const { errors } = await setup(page);
+    await page.goto('/404.html#games');
+    await page.locator('#game-sweeper').click();
+    const cells = page.locator('.sw-cell');
+    await expect(cells).toHaveCount(81);
+    await cells.nth(40).click();
+    await expect(page.locator('.sw-cell.open').first()).toBeVisible();
+    await expect(page.locator('.sw-cell.boom')).toHaveCount(0);
+    const closed = page.locator('.sw-cell:not(.open)').first();
+    await closed.click({ button: 'right' });
+    await expect(page.locator('.sw-cell.flag')).toHaveCount(1);
+    await expect(page.locator('.game-hud')).toContainText('はた 1');
+    await page.screenshot({ path: `${SHOTS}/22-games-sweeper.png` });
+    await page.getByRole('button', { name: 'ふつう' }).click();
+    await expect(cells).toHaveCount(144);
+    expect(only404(errors)).toEqual([]);
+  });
+
+  test('ブロックくずし・つみつみ鉱石・トロッコれっしゃが動く', async ({ page }) => {
+    const { errors } = await setup(page);
+    await page.goto('/404.html#games');
+
+    await page.locator('#game-breakout').click();
+    await page.getByRole('button', { name: 'スタート' }).click();
+    await page.keyboard.press(' ');
+    await page.keyboard.down('ArrowLeft');
+    await page.waitForTimeout(400);
+    await page.keyboard.up('ArrowLeft');
+    await expect(page.locator('.game-hud')).toContainText('ステージ 1');
+    await page.screenshot({ path: `${SHOTS}/23-games-breakout.png` });
+
+    await page.locator('#game-stack').click();
+    await page.getByRole('button', { name: 'スタート' }).click();
+    for (const k of ['ArrowLeft', 'ArrowUp', ' ', 'ArrowRight', ' ', ' ']) await page.keyboard.press(k);
+    await expect(page.locator('.game-hud')).not.toContainText('スコア 0　');
+    await page.screenshot({ path: `${SHOTS}/24-games-stack.png` });
+
+    await page.locator('#game-train').click();
+    await page.getByRole('button', { name: 'スタート' }).click();
+    await page.keyboard.press('ArrowUp');
+    await page.waitForTimeout(300);
+    await expect(page.locator('.game-hud')).toContainText('車両 3');
+    await page.screenshot({ path: `${SHOTS}/25-games-train.png` });
+    expect(only404(errors)).toEqual([]);
+  });
+
+  test('スライムたたきとジャンプでのぼれ！が動く', async ({ page }) => {
+    const { errors } = await setup(page);
+    await page.goto('/404.html#games');
+
+    await page.locator('#game-whack').click();
+    await page.getByRole('button', { name: 'スタート' }).click();
+    let hit = false;
+    for (let i = 0; i < 8 && !hit; i++) {
+      const slime = page.locator('.whack-hole.up.slime, .whack-hole.up.gold').first();
+      await slime.waitFor({ timeout: 4000 });
+      await slime.click().catch(() => {});
+      hit = !(await page.locator('.game-hud').textContent()).includes('スコア 0　');
+    }
+    expect(hit).toBe(true);
+    await page.screenshot({ path: `${SHOTS}/26-games-whack.png` });
+
+    await page.locator('#game-jump').click();
+    await page.getByRole('button', { name: 'スタート' }).click();
+    await page.waitForTimeout(500);
+    await expect(page.locator('.game-hud')).not.toContainText('高さ 0 m');
+    await page.screenshot({ path: `${SHOTS}/27-games-jump.png` });
     expect(only404(errors)).toEqual([]);
   });
 

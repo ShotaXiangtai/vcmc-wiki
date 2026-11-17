@@ -40,7 +40,7 @@ site/                        GitHub Pages で公開するもの
   js/common.js               画面の枠と Markdown の描画（marked + DOMPurify）
   js/rules.js                ページ名などのルール（scripts/rules.mjs と同じ内容）
   js/view.js / edit.js       閲覧画面 / 編集画面
-  js/notfound.js / games.js  404 ページ / かくしミニゲーム（ほりほりチャレンジ・よけろ！落ちブロック・鉱石あわせ・はんのう速度）
+  js/notfound.js / games.js  404 ページ / かくしミニゲーム 10 種類（ほりほりチャレンジ〈CPS 測定つき〉・ジャンプでのぼれ！・どかんさがし・ブロックくずし・つみつみ鉱石・トロッコれっしゃ・スライムたたき・よけろ！落ちブロック・鉱石あわせ・はんのう速度）
   js/vendor/                 marked と DOMPurify（CDN は使わず同梱）
   pages/*.md                 記事。ファイル名がそのままページ名（日本語 OK）
 scripts/
