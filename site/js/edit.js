@@ -32,6 +32,113 @@
     buildEditor(r.src != null, r.src);
   });
 
+  // 新しいページのひな形（[[カテゴリ:...]] 付き）
+  var TEMPLATES = {
+    '攻略': [
+      '（この攻略で何ができるようになるかを、1〜2行で書きます）',
+      '',
+      '## 必要なもの',
+      '',
+      '- ',
+      '- ',
+      '',
+      '## やり方',
+      '',
+      '1. ',
+      '2. ',
+      '3. ',
+      '',
+      '## コツ・注意点',
+      '',
+      '- ',
+      '',
+      '## 関連ページ',
+      '',
+      '- [[はじめかた]]',
+      '',
+      '[[カテゴリ:攻略]]',
+      '',
+    ].join('\n'),
+    '建築紹介': [
+      '（どんな建物かを、ひとことで）',
+      '',
+      '## 基本情報',
+      '',
+      '| 項目 | 内容 |',
+      '| --- | --- |',
+      '| 作った人 | [[スキン:MCID]] |',
+      '| 場所 | （ワールドの名前など。座標は作った人がいいと言ったときだけ） |',
+      '| 完成した日 | 2026年◯月◯日 |',
+      '',
+      '## 写真',
+      '',
+      '（X にポストした写真の URL を、下の行の URL と入れかえます）',
+      '',
+      '[[埋め込み:https://x.com/ユーザー名/status/1234567890]]',
+      '',
+      '## 見どころ',
+      '',
+      '- ',
+      '',
+      '[[カテゴリ:建築]]',
+      '',
+    ].join('\n'),
+    'イベント': [
+      '（どんなイベントかを、ひとことで）',
+      '',
+      '## 日時・場所',
+      '',
+      '| 項目 | 内容 |',
+      '| --- | --- |',
+      '| 日時 | 2026年◯月◯日 ◯時〜 |',
+      '| 場所 | |',
+      '| 主催 | |',
+      '',
+      '## ルール',
+      '',
+      '- ',
+      '',
+      '## 結果',
+      '',
+      '- ',
+      '',
+      '[[カテゴリ:イベント]]',
+      '',
+    ].join('\n'),
+    'プレイヤー紹介': [
+      '[[スキン:MCID|64]]',
+      '',
+      '（どんな人かを、ひとことで。本人に「書いていい？」と聞いてから書いてね）',
+      '',
+      '## プロフィール',
+      '',
+      '| 項目 | 内容 |',
+      '| --- | --- |',
+      '| MCID | [[スキン:MCID]] |',
+      '| よくいる場所 | |',
+      '| 好きなこと | |',
+      '',
+      '## 作ったもの・活動',
+      '',
+      '- ',
+      '',
+      '[[カテゴリ:プレイヤー]]',
+      '',
+    ].join('\n'),
+    'よくある質問': [
+      '## 質問1',
+      '',
+      '答え',
+      '',
+      '## 質問2',
+      '',
+      '答え',
+      '',
+      '[[カテゴリ:よくある質問]]',
+      '',
+    ].join('\n'),
+  };
+
   /** localStorage は使えないことがあるので必ず try で囲む */
   function store(key, value) {
     try {
@@ -99,7 +206,16 @@
     var tabPreview = h('button', { type: 'button', role: 'tab', id: 'tab-preview', class: 'edit-tab', 'aria-selected': 'false', 'aria-controls': 'preview-pane' }, 'プレビュー');
     var previewHeading = h('h1', { class: 'firstHeading preview-heading' });
     var previewBody = h('div', { id: 'wikiPreview', class: 'mw-body-content' });
-    var editPane = h('div', { id: 'edit-pane', role: 'tabpanel', 'aria-labelledby': 'tab-edit' }, toolbar, textarea, counter);
+    // ---- 新しいページのひな形 -----------------------------------------------------
+    var templateBar = exists ? null : h('div', { class: 'template-bar', role: 'group', 'aria-label': 'ひな形' },
+      h('span', { class: 'template-label' }, 'ひな形：'),
+      Object.keys(TEMPLATES).map(function (name) {
+        return h('button', { type: 'button', class: 'tool-button template-button', title: '「' + name + '」の型を入れる', onclick: function () { applyTemplate(name); } }, name);
+      }));
+    var draftStatus = h('span', { id: 'draft-status', class: 'draft-status', 'aria-live': 'polite' });
+    var draftBox = h('div', { id: 'draft-box' });
+    var editPane = h('div', { id: 'edit-pane', role: 'tabpanel', 'aria-labelledby': 'tab-edit' },
+      templateBar, toolbar, textarea, h('div', { class: 'edit-meta' }, draftStatus, counter));
     var previewPane = h('div', { id: 'preview-pane', role: 'tabpanel', 'aria-labelledby': 'tab-preview', hidden: true },
       Wiki.messageBox('warning', 'これはプレビューです。まだ投稿されていません。', { class: 'previewnote' }),
       previewHeading, previewBody);
@@ -156,6 +272,7 @@
         '書き方は ', h('a', { href: Wiki.pageUrl(cfg.helpPage), target: '_blank' }, 'Wikiの書き方'),
         '（', h('a', { href: Wiki.pageUrl(cfg.helpEasyPage), target: '_blank' }, 'かんたん版'), '）を見てください。',
       ], { class: 'editnotice' }),
+      draftBox,
       h('div', { class: 'edit-field' }, h('label', { for: 'wpTitle' }, 'ページ名'), titleInput, titleHint),
       h('div', { class: 'edit-tabs', role: 'tablist', 'aria-label': '編集とプレビュー' }, tabEdit, tabPreview),
       editPane,
@@ -168,9 +285,74 @@
     updateCounter();
     updateTitleHint();
 
+    // ---- 下書きの自動保存（このブラウザの中だけ） -------------------------------------
+    var DRAFT_KEY = 'wiki-draft:' + (exists ? requested : '__new__:' + requested);
+    var saveTimer = null;
+    function readDraft() {
+      try {
+        var d = JSON.parse(window.localStorage.getItem(DRAFT_KEY) || 'null');
+        return d && typeof d.content === 'string' ? d : null;
+      } catch (e) { return null; }
+    }
+    function discardDraft() {
+      try { window.localStorage.removeItem(DRAFT_KEY); } catch (e) { /* 何もしない */ }
+    }
+    function writeDraft() {
+      try {
+        if (textarea.value === initialContent && (exists || titleInput.value === initialTitle)) {
+          window.localStorage.removeItem(DRAFT_KEY);
+          draftStatus.textContent = '';
+          return;
+        }
+        var now = new Date().toISOString();
+        window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ title: titleInput.value, content: textarea.value, savedAt: now }));
+        draftStatus.textContent = '下書きを自動保存しました（' + (Wiki.formatDate(now).split(' ')[1] || '') + '）';
+      } catch (e) {
+        draftStatus.textContent = '';
+      }
+    }
+    function scheduleSave() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(writeDraft, 600);
+    }
+    (function offerDraft() {
+      var d = readDraft();
+      if (!d) return;
+      var norm = function (s) { return String(s || '').replace(/\r\n?/g, '\n').replace(/\n+$/, ''); };
+      if (norm(d.content) === norm(original)) { discardDraft(); return; } // もう記事に反映されている
+      var useButton = h('button', { type: 'button', id: 'draft-use', class: 'mw-ui-button mw-ui-progressive' }, '下書きを使う');
+      var dropButton = h('button', { type: 'button', id: 'draft-discard', class: 'mw-ui-button' }, '下書きを捨てる');
+      draftBox.replaceChildren(Wiki.messageBox('warning', [
+        h('p', null, h('b', null, '前に書いていた下書きがあります'), '（' + Wiki.formatDate(d.savedAt) + ' に保存）。'),
+        h('div', { class: 'editButtons' }, useButton, dropButton),
+      ], { class: 'draft-notice' }));
+      useButton.addEventListener('click', function () {
+        textarea.value = d.content;
+        if (!exists && d.title) titleInput.value = d.title;
+        updateCounter();
+        updateHeading();
+        updateTitleHint();
+        githubLink.href = Wiki.githubEditUrl(currentTitleSafe(), exists);
+        markChanged();
+        draftBox.replaceChildren();
+        draftStatus.textContent = '下書きを戻しました';
+      });
+      dropButton.addEventListener('click', function () {
+        discardDraft();
+        draftBox.replaceChildren();
+      });
+    })();
+
+    function applyTemplate(name) {
+      if (textarea.value.trim() && !window.confirm('いまの本文を「' + name + '」のひな形で置き換えますか？')) return;
+      replaceRange(0, textarea.value.length, TEMPLATES[name]);
+      textarea.setSelectionRange(0, 0);
+      textarea.scrollTop = 0;
+    }
+
     Promise.all([indexPromise, Wiki.fetchPageIfListed(cfg.howtoPage).catch(function () { return null; })]).then(function (r) {
       if (r[1]) {
-        Wiki.renderInto(guideBody, r[1], Wiki.pageSet(r[0]), { toc: false });
+        Wiki.renderInto(guideBody, r[1], Wiki.pageSet(r[0]), { toc: false, categories: false });
       } else {
         guideBody.replaceChildren(h('p', null, '「', h('a', { href: Wiki.pageUrl(cfg.howtoPage) }, cfg.howtoPage), '」のページを見てください。'));
       }
@@ -195,8 +377,10 @@
     textarea.addEventListener('input', function () {
       updateCounter();
       markChanged();
+      scheduleSave();
     });
     titleInput.addEventListener('input', function () {
+      scheduleSave();
       updateHeading();
       updateTitleHint();
       githubLink.href = Wiki.githubEditUrl(currentTitleSafe(), exists);

@@ -3,6 +3,7 @@ node_modules/
 
 # build-index.mjs が作る一覧（公開時に GitHub Actions が作る）
 site/pages/index.json
+site/pages/search.json
 
 # 秘密の値を書いたファイルを置かないための保険
 .env

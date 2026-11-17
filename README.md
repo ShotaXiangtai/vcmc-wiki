@@ -7,6 +7,8 @@ Minecraft サーバー「VoiceMC」のプレイヤー向け攻略・ルール集
 - **GitHub アカウントがあれば、だれでも編集を提案できます**。Wiki の編集画面で書いてプレビューし、本文をコピーして GitHub の編集画面に貼り付け、投稿者自身のアカウントでプルリクエスト（PR）を作ります
 - **管理者が PR を確認してマージすると公開**されます
 
+主な機能：記事の閲覧・検索（ページ名と本文の全文）・目次・赤リンク／編集画面（書式ボタン・プレビュー・ひな形・下書きの自動保存）／最終更新日と「最近の更新」／カテゴリ（`[[カテゴリ:名前]]`）／リンク元／承認待ちの投稿の一覧／X・YouTube の埋め込みとスキンの顔／コードのコピーボタン／ダークモード（自動・ライト・ダーク）／かんたん版のページ／404 ページのかくしミニゲーム
+
 ```
 投稿者 ─ Wiki で書く・プレビュー ─▶ 本文をコピー ─▶ GitHub で貼り付けて PR ─▶ 自動で検証 ─▶ 管理者がマージ ─▶ 自動で公開
 ```
@@ -40,12 +42,13 @@ site/                        GitHub Pages で公開するもの
   js/common.js               画面の枠と Markdown の描画（marked + DOMPurify）
   js/rules.js                ページ名などのルール（scripts/rules.mjs と同じ内容）
   js/view.js / edit.js       閲覧画面 / 編集画面
+  js/theme.js                ダークモードの設定を、ページが表示される前に反映する
   js/notfound.js / games.js  404 ページ / かくしミニゲーム 10 種類（ほりほりチャレンジ〈CPS 測定つき〉・ジャンプでのぼれ！・どかんさがし・ブロックくずし・つみつみ鉱石・トロッコれっしゃ・スライムたたき・よけろ！落ちブロック・鉱石あわせ・はんのう速度）
   js/vendor/                 marked と DOMPurify（CDN は使わず同梱）
   pages/*.md                 記事。ファイル名がそのままページ名（日本語 OK）
 scripts/
   rules.mjs                  ページ名・本文のルール
-  build-index.mjs            pages/index.json（ページ名と抜粋の一覧）を作る
+  build-index.mjs            pages/index.json（一覧・更新日・カテゴリ・リンク）と pages/search.json（全文検索）を作る
   validate.mjs               記事と、PR の説明欄の同意チェックを検証する
   serve.mjs                  ローカル確認用の Web サーバー
   capture-guide.mjs          「投稿のしかた」の 1 枚目の画像を撮り直す

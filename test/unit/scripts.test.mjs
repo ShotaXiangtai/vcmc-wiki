@@ -6,7 +6,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { makeExcerpt } from '../../scripts/build-index.mjs';
+import { makeExcerpt, extractLinks, makePlainText } from '../../scripts/build-index.mjs';
 import { validate, missingAgreements } from '../../scripts/validate.mjs';
 
 const scriptsDir = fileURLToPath(new URL('../../scripts/', import.meta.url));
@@ -39,6 +39,42 @@ describe('build-index.mjs', () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  test('更新日・カテゴリ・リンク・全文検索のデータも書き出す', () => {
+    const root = makeRepo({
+      'site/pages/A.md': [
+        '[[B]] と [[C|シー]] と [[A#節]]',
+        '',
+        '`[[コードの中]]`',
+        '',
+        '[[カテゴリ:攻略]]',
+        '[[カテゴリ:入門]]',
+        '[[埋め込み:https://x.com/a/status/1]]',
+        '本文のずっと後ろにある言葉',
+      ].join('\n'),
+      'site/pages/B.md': 'b',
+    });
+    try {
+      execFileSync(process.execPath, [join(scriptsDir, 'build-index.mjs'), '--root', root]);
+      const list = JSON.parse(readFileSync(join(root, 'site', 'pages', 'index.json'), 'utf8'));
+      const a = list.find((x) => x.title === 'A');
+      assert.deepEqual(a.categories, ['攻略', '入門']);
+      assert.deepEqual(a.links.sort(), ['A', 'B', 'C'].sort());
+      assert.ok(!Number.isNaN(Date.parse(a.updated)), '更新日が日時になっている');
+      const search = JSON.parse(readFileSync(join(root, 'site', 'pages', 'search.json'), 'utf8'));
+      assert.match(search.find((x) => x.title === 'A').text, /ずっと後ろにある言葉/);
+      assert.doesNotMatch(search.find((x) => x.title === 'A').text, /カテゴリ|攻略/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('extractLinks：コードの中は数えない。不正なカテゴリ名は無視', () => {
+    const r = extractLinks(['[[X]]', '```', '[[Y]]', '```', '[[カテゴリ:よい]]', '[[カテゴリ:だ/め]]', '[[スキン:Notch]]'].join('\n'));
+    assert.deepEqual(r.links, ['X']);
+    assert.deepEqual(r.categories, ['よい']);
+    assert.equal(makePlainText('a [[カテゴリ:攻略]] b'), 'a b');
   });
 
   test('makeExcerpt：リンク・画像・表を文字だけにし、長い文は省略する', () => {

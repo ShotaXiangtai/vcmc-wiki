@@ -604,7 +604,7 @@ test.describe('編集', () => {
     expect(value).toContain('**強調**');
     expect(value).toContain('[[よくある質問]]');
     await page.keyboard.press('End');
-    await page.getByRole('button', { name: '表' }).click();
+    await page.getByRole('button', { name: '表', exact: true }).click();
     expect(await ta.inputValue()).toContain('| 見出し1 | 見出し2 |\n| --- | --- |');
 
     await page.getByRole('tab', { name: 'プレビュー' }).click();

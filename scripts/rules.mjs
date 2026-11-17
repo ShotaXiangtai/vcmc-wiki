@@ -35,6 +35,7 @@ export function maskCode(text) {
 // 埋め込みとスキンの書き方：[[埋め込み:URL]] / [[スキン:MCID]] / [[スキン:MCID|64]]
 export const EMBED_PREFIXES = ['埋め込み:', 'embed:'];
 export const SKIN_PREFIXES = ['スキン:', 'skin:'];
+export const CATEGORY_PREFIXES = ['カテゴリ:', 'category:'];
 const X_URL = /^https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/([A-Za-z0-9_]{1,15})\/status(?:es)?\/(\d{1,25})(?:[/?#][^\s]*)?$/i;
 const YT_WATCH = /^https?:\/\/(?:www\.|m\.|music\.)?youtube\.com\/watch\?(?:[^\s#]*&)?v=([A-Za-z0-9_-]{11})(?:[&#][^\s]*)?$/i;
 const YT_PATH = /^https?:\/\/(?:www\.|m\.)?youtube\.com\/(?:shorts|live|embed)\/([A-Za-z0-9_-]{11})(?:[/?#][^\s]*)?$/i;
@@ -100,7 +101,10 @@ export function findForbidden(text) {
     const target = m[1].trim();
     const embed = EMBED_PREFIXES.find((p) => target.startsWith(p));
     const skin = SKIN_PREFIXES.find((p) => target.startsWith(p));
-    if (embed && !parseEmbed(target.slice(embed.length))) {
+    const cat = CATEGORY_PREFIXES.find((p) => target.startsWith(p));
+    if (cat && checkTitle(target.slice(cat.length).trim().normalize('NFC'))) {
+      found.push({ label: 'カテゴリ名が正しくない', line: lineOf(m.index) });
+    } else if (embed && !parseEmbed(target.slice(embed.length))) {
       found.push({ label: '埋め込めない URL（X のポストか YouTube の動画だけ）', line: lineOf(m.index) });
     } else if (skin && !isMcid(target.slice(skin.length))) {
       found.push({ label: 'MCID の形が正しくない', line: lineOf(m.index) });

@@ -15,7 +15,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CONTENT_MAX_BYTES, checkTitle, findForbidden } from './rules.mjs';
 
-const GENERATED = new Set(['index.json']); // build-index.mjs が作るファイル（Git には入れない）
+const GENERATED = new Set(['index.json', 'search.json']); // build-index.mjs が作るファイル（Git には入れない）
 
 // 変更されたら特に注意して見てほしいページ
 export const PROTECTED_PAGES = [

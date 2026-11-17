@@ -134,7 +134,7 @@
   // ---------------------------------------------------------------------------
 
   /** [[ページ名]] / [[ページ名|表示名]] / [[ページ名#節]] を扱う marked の拡張 */
-  function wikiLinkExtension(pageSet) {
+  function wikiLinkExtension(pageSet, ctx) {
     return {
       name: 'wikilink',
       level: 'inline',
@@ -148,6 +148,15 @@
         return { type: 'wikilink', raw: m[0], target: m[1], label: m[2] };
       },
       renderer: function (token) {
+        // [[カテゴリ:名前]] は本文には出さず、最後のカテゴリ欄にまとめる
+        var raw = token.target.trim();
+        var cp = prefixOf(raw, Rules.CATEGORY_PREFIXES);
+        if (cp) {
+          var cat = Wiki.normalizeTitle(raw.slice(cp.length));
+          if (Rules.checkTitle(cat)) return '<span class="wiki-embed-error">' + escapeHtml(token.raw) + '（カテゴリ名が正しくありません）</span>';
+          if (ctx && ctx.categories.indexOf(cat) < 0) ctx.categories.push(cat);
+          return '';
+        }
         var special = renderEmbedOrSkin(token);
         if (special != null) return special;
         var target = token.target.trim();
@@ -225,14 +234,83 @@
 
   /** Markdown を安全な DocumentFragment にする（目次・リンク処理込み） */
   Wiki.renderMarkdown = function (src, pageSet, opts) {
+    opts = opts || {};
+    var ctx = { categories: [] };
     var md = new window.marked.Marked({ gfm: true, breaks: true, async: false });
-    md.use({ extensions: [wikiLinkExtension(pageSet)] });
+    md.use({ extensions: [wikiLinkExtension(pageSet, ctx)] });
     var html = md.parse(String(src));
     // 必ず DOMPurify を通す
     var frag = window.DOMPurify.sanitize(html, SANITIZE_OPTIONS);
-    postProcess(frag, opts || {});
+    postProcess(frag, opts);
+    if (ctx.categories.length && opts.categories !== false) frag.appendChild(categoryBox(ctx.categories));
     return frag;
   };
+
+  Wiki.categoryUrl = function (name) {
+    return './?category=' + encodeURIComponent(name);
+  };
+
+  /** 記事の下に出すカテゴリ欄（Wikipedia と同じ形） */
+  function categoryBox(categories) {
+    var list = h('ul');
+    categories.forEach(function (c) { list.appendChild(h('li', null, h('a', { href: Wiki.categoryUrl(c) }, c))); });
+    return h('div', { class: 'catlinks', role: 'navigation', 'aria-label': 'カテゴリ' },
+      h('a', { href: './?special=categories' }, 'カテゴリ'), ': ', list);
+  }
+
+  /** ISO の日時を「2026年11月18日 12:34」にする */
+  Wiki.formatDate = function (iso, withTime) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var s = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    return withTime === false ? s : s + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  };
+
+  var searchPromise = null;
+  /** 全文検索用のデータ（pages/search.json）を読む。読めなければ null */
+  Wiki.loadSearch = function () {
+    if (!searchPromise) {
+      searchPromise = fetch('pages/search.json', { cache: 'no-cache' })
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .catch(function () { return null; })
+        .then(function (list) { return Array.isArray(list) ? list : null; });
+    }
+    return searchPromise;
+  };
+
+  // ---------------------------------------------------------------------------
+  // 表示の明るさ（自動 / ライト / ダーク）。最初の反映は js/theme.js が行う
+  // ---------------------------------------------------------------------------
+  var THEMES = ['auto', 'light', 'dark'];
+  var THEME_LABELS = { auto: '🌓 表示：自動', light: '☀ 表示：ライト', dark: '🌙 表示：ダーク' };
+  Wiki.getTheme = function () {
+    var v = null;
+    try { v = window.localStorage.getItem('wiki-theme'); } catch (e) { v = null; }
+    return THEMES.indexOf(v) >= 0 ? v : 'auto';
+  };
+  Wiki.setTheme = function (v) {
+    try {
+      if (v === 'auto') window.localStorage.removeItem('wiki-theme');
+      else window.localStorage.setItem('wiki-theme', v);
+    } catch (e) { /* 保存できなくても、このページでは切り替える */ }
+    if (v === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', v);
+    document.querySelectorAll('.theme-toggle').forEach(function (b) { b.textContent = THEME_LABELS[v]; });
+  };
+  Wiki.isDark = function () {
+    var v = document.documentElement.getAttribute('data-theme');
+    if (v) return v === 'dark';
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  };
+  function themeButton() {
+    var b = h('button', { type: 'button', class: 'theme-toggle', title: '表示の明るさを切り替える（自動 → ライト → ダーク）' }, THEME_LABELS[Wiki.getTheme()]);
+    b.addEventListener('click', function () {
+      var next = THEMES[(THEMES.indexOf(Wiki.getTheme()) + 1) % THEMES.length];
+      Wiki.setTheme(next);
+    });
+    return b;
+  }
 
   /** container の中身を描画結果で置き換える（opts.toc === false で目次を作らない） */
   Wiki.renderInto = function (container, src, pageSet, opts) {
@@ -272,6 +350,39 @@
       var e = a && Rules.parseEmbed(a.getAttribute('href'));
       if (!e) { mark.replaceWith(document.createTextNode(mark.textContent)); return; }
       mark.replaceWith(embedCard(e));
+    });
+    // コード：複数行のコードには「コピー」ボタン。/ で始まる 1 行のコード（コマンド）は押すとコピー
+    frag.querySelectorAll('pre').forEach(function (pre) {
+      var code = pre.textContent.replace(/\n$/, '');
+      var status = h('span', { class: 'code-copy-status', 'aria-live': 'polite' });
+      var button = h('button', { type: 'button', class: 'code-copy', title: 'このコードをコピー' }, 'コピー');
+      button.addEventListener('click', function () {
+        Wiki.copyText(code).then(function (ok) {
+          status.textContent = ok ? 'コピーしました' : 'コピーできませんでした';
+          setTimeout(function () { status.textContent = ''; }, 1500);
+        });
+      });
+      var wrap = h('div', { class: 'code-block' });
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.append(pre, h('div', { class: 'code-copy-bar' }, status, button));
+    });
+    frag.querySelectorAll('code').forEach(function (code) {
+      if (code.closest('pre')) return;
+      var text = code.textContent;
+      if (!/^\/\S/.test(text) || text.indexOf('\n') >= 0) return;
+      code.classList.add('cmd');
+      code.setAttribute('role', 'button');
+      code.setAttribute('tabindex', '0');
+      code.setAttribute('title', 'クリックでコピー');
+      function copy() {
+        Wiki.copyText(text).then(function (ok) {
+          if (!ok) return;
+          code.classList.add('copied');
+          setTimeout(function () { code.classList.remove('copied'); }, 1200);
+        });
+      }
+      code.addEventListener('click', copy);
+      code.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy(); } });
     });
     // 入力欄はタスクリストのチェックボックスだけ残す（操作不可）
     frag.querySelectorAll('input').forEach(function (input) {
@@ -466,7 +577,7 @@
         frame.replaceChildren();
         frame.hidden = false; // X の部品は見えている場所でないと大きさを決められないため、先に出しておく
         twttr.widgets.createTweet(wrap.getAttribute('data-embed-id'), frame, {
-          dnt: true, lang: 'ja', conversation: 'none', align: 'center',
+          dnt: true, lang: 'ja', conversation: 'none', align: 'center', theme: Wiki.isDark() ? 'dark' : 'light',
         }).then(function (el) {
           wrap.classList.remove('wiki-embed-loading');
           if (el) embedShown(wrap, frame);
@@ -515,6 +626,7 @@
     return h('nav', { id: id, class: 'portal', 'aria-labelledby': label ? headingId : null, 'aria-label': label ? null : 'ナビゲーション' },
       label ? h('h3', { id: headingId }, label) : null,
       h('div', { class: 'body' }, h('ul', null, items.filter(Boolean).map(function (it) {
+        if (it.el) return h('li', { id: it.id || null }, it.el);
         var attrs = { href: it.href, title: it.tip || null };
         if (it.external) { attrs.target = '_blank'; attrs.rel = 'noopener noreferrer'; }
         return h('li', { id: it.id || null }, h('a', attrs, it.text));
@@ -574,7 +686,8 @@
       h('nav', { id: 'p-personal', 'aria-label': '案内' },
         h('ul', null,
           h('li', { id: 'pt-anon' }, 'GitHub アカウントで編集を提案できます（承認制）'),
-          h('li', null, h('a', { href: Wiki.pageUrl(cfg.howtoPage) }, '投稿のしかた')))),
+          h('li', null, h('a', { href: Wiki.pageUrl(cfg.howtoPage) }, '投稿のしかた')),
+          h('li', { id: 'pt-theme' }, themeButton()))),
       h('div', { id: 'left-navigation' },
         h('nav', { id: 'p-namespaces', class: 'vectorTabs', 'aria-label': '名前空間' }, leftTabs)),
       h('div', { id: 'right-navigation' },
@@ -586,9 +699,11 @@
     var toolItems = [];
     if (o.page && !o.special) {
       toolItems.push({ text: o.exists ? 'このページを編集' : 'このページを作成', href: Wiki.editUrl(o.page), id: 't-edit' });
+      if (o.exists) toolItems.push({ text: 'リンク元', href: './?special=backlinks&p=' + encodeURIComponent(o.page), id: 't-backlinks', tip: 'このページにリンクしているページ' });
       if (o.exists) toolItems.push({ text: '変更履歴（GitHub）', href: Wiki.historyUrl(o.page), external: true, id: 't-history' });
     }
-    toolItems.push({ text: '承認待ちの投稿', href: Wiki.pullsUrl(), external: true, id: 't-pulls', tip: 'GitHub のプルリクエスト一覧' });
+    toolItems.push({ text: '承認待ちの投稿', href: './?special=pending', id: 't-pulls', tip: 'まだ承認されていない投稿の一覧' });
+    toolItems.push({ el: themeButton(), id: 't-theme' });
 
     var panel = h('div', { id: 'mw-panel' },
       h('div', { id: 'p-logo', role: 'banner' },
@@ -599,7 +714,9 @@
       portal('p-navigation', null, [
         { text: 'メインページ', href: './', id: 'n-mainpage' },
         { text: 'かんたん版（はじめての人へ）', href: Wiki.pageUrl(cfg.easyPage), id: 'n-easy' },
+        { text: '最近の更新', href: './?special=recent', id: 'n-recentchanges' },
         { text: '全ページ一覧', href: './?special=all', id: 'n-allpages' },
+        { text: 'カテゴリ一覧', href: './?special=categories', id: 'n-categories' },
         { text: 'おまかせ表示', href: './?special=random', id: 'n-randompage', tip: 'ページをランダムに表示' },
         { text: '新しいページを作る', href: Wiki.editUrl(''), id: 'n-newpage' },
         { text: '投稿のしかた', href: Wiki.pageUrl(cfg.howtoPage), id: 'n-howto' },
