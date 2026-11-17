@@ -18,7 +18,13 @@ import { CONTENT_MAX_BYTES, checkTitle, findForbidden } from './rules.mjs';
 const GENERATED = new Set(['index.json']); // build-index.mjs が作るファイル（Git には入れない）
 
 // 変更されたら特に注意して見てほしいページ
-export const PROTECTED_PAGES = ['site/pages/利用規約.md', 'site/pages/ライセンス.md'];
+export const PROTECTED_PAGES = [
+  'site/pages/利用規約.md',
+  'site/pages/ライセンス.md',
+  'site/pages/利用規約（かんたん版）.md',
+  'site/pages/ライセンス（かんたん版）.md',
+  'site/pages/画像のルール.md',
+];
 
 // プルリクの説明欄（.github/pull_request_template.md）の確認項目。各行の [ ] が [x] になっている必要がある
 export const AGREEMENTS = [

@@ -144,7 +144,7 @@ test.describe('閲覧', () => {
     const { errors } = await setup(page);
     await page.goto('/?special=all');
     await expect(page.locator('#firstHeading')).toHaveText('全ページ一覧');
-    await expect(page.locator('.mw-allpages-chunk li')).toHaveCount(7);
+    await expect(page.locator('.mw-allpages-chunk li')).toHaveCount(9);
 
     await page.locator('#searchInput').fill('サーバー');
     await page.locator('#searchInput').press('Enter');
@@ -182,6 +182,32 @@ test.describe('閲覧', () => {
       await expect.poll(() => img.evaluate((i) => i.complete && i.naturalWidth)).toBeGreaterThan(0);
     }
     await page.screenshot({ path: `${SHOTS}/04-howto.png`, fullPage: true });
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('かんたん版', () => {
+  test('利用規約・ライセンスのかんたん版があり、正式版・フッター・編集画面から行ける', async ({ page, context }) => {
+    const { errors } = await setup(page, context);
+    for (const [formal, easy, words] of [
+      ['利用規約', '利用規約（かんたん版）', 'みんなで仲よく'],
+      ['ライセンス', 'ライセンス（かんたん版）', 'だれでも自由に使っていいよ'],
+    ]) {
+      await page.goto(`/?p=${enc(formal)}`);
+      const callout = page.locator('#mw-content-text > blockquote').first();
+      await expect(callout).toContainText('むずかしい文章が苦手な人は');
+      await callout.locator('a', { hasText: easy }).click();
+      await expect(page.locator('#firstHeading')).toHaveText(easy);
+      await expect(page.locator('#mw-content-text')).toContainText(words);
+      await expect(page.locator('#mw-content-text a', { hasText: formal }).first()).toHaveAttribute('href', `./?p=${enc(formal)}`);
+      await expect(page.locator('#mw-content-text a.new')).toHaveCount(0); // 赤リンクがない
+      await expect(page.locator('#footer-places a', { hasText: easy })).toBeVisible();
+    }
+    await page.screenshot({ path: `${SHOTS}/14-license-easy.png`, fullPage: true });
+    await page.goto(`/?p=${enc('利用規約（かんたん版）')}`);
+    await page.screenshot({ path: `${SHOTS}/15-terms-easy.png`, fullPage: true });
+    await page.goto('/edit.html');
+    await expect(page.locator('.edit-legal a', { hasText: '利用規約のかんたん版' })).toHaveAttribute('href', `./?p=${enc('利用規約（かんたん版）')}`);
     expect(errors).toEqual([]);
   });
 });

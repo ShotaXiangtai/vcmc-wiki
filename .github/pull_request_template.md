@@ -13,4 +13,5 @@
 
 <!-- 利用規約：https://wiki.vcmc.jp/?p=利用規約
      ライセンス：https://wiki.vcmc.jp/?p=ライセンス
-     画像のルール：https://wiki.vcmc.jp/?p=画像のルール -->
+     画像のルール：https://wiki.vcmc.jp/?p=画像のルール
+     かんたん版：https://wiki.vcmc.jp/?p=利用規約（かんたん版）・https://wiki.vcmc.jp/?p=ライセンス（かんたん版） -->
