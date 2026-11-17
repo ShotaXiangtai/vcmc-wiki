@@ -1,0 +1,15 @@
+<!-- 下の「確認」の [ ] を、3つとも [x] に書き換えてから「Create pull request」を押してください -->
+
+## 投稿の内容
+
+- ページ名：
+- 変更の要約：
+
+## 確認
+
+- [ ] VoiceMC Wiki の利用規約に同意します
+- [ ] 投稿する文章・画像が CC BY-SA 4.0 で公開されることに同意します
+- [ ] 他のサイトや本などからの無断転載ではありません
+
+<!-- 利用規約：https://shotaxiangtai.github.io/vcmc-wiki/?p=利用規約
+     ライセンス：https://shotaxiangtai.github.io/vcmc-wiki/?p=ライセンス -->

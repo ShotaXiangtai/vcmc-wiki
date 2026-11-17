@@ -1,0 +1,985 @@
+/* Wikipedia（Vector legacy）風のスタイル。ロゴや名称は使っていません。 */
+
+:root {
+  --link: #0645ad;
+  --link-visited: #0b0080;
+  --link-new: #ba0000;
+  --link-new-visited: #a55858;
+  --link-external: #3366cc;
+  --text: #202122;
+  --text-subtle: #54595d;
+  --border: #a2a9b1;
+  --border-light: #c8ccd1;
+  --border-faint: #eaecf0;
+  --tab-border: #a7d7f9;
+  --bg-page: #f6f6f6;
+  --bg-content: #ffffff;
+  --bg-box: #f8f9fa;
+  --bg-th: #eaecf0;
+  --progressive: #3366cc;
+  --font-serif: 'Linux Libertine', 'Georgia', 'Times', 'Hiragino Mincho ProN', 'Hiragino Mincho Pro',
+    'Yu Mincho', 'YuMincho', 'BIZ UDPMincho', 'Noto Serif JP', 'Noto Serif CJK JP', serif;
+  --font-sans: sans-serif;
+  --font-mono: monospace, monospace;
+  --panel-width: 11em;
+  color-scheme: light;
+}
+
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+}
+body {
+  background-color: var(--bg-page);
+  color: var(--text);
+  font-size: 100%;
+  min-height: 100vh;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+.mw-jump-link:not(:focus) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0);
+}
+.mw-jump-link:focus {
+  position: absolute; top: 4px; left: 4px; z-index: 1000;
+  background: #fff; padding: 4px 8px; border: 1px solid var(--border);
+}
+.loading, .noscript { margin: 2em; color: var(--text-subtle); }
+
+/* ---- リンク --------------------------------------------------------------- */
+a { color: var(--link); text-decoration: none; }
+a:visited { color: var(--link-visited); }
+a:hover { text-decoration: underline; }
+a:active { color: #faa700; }
+a:focus-visible { outline: 2px solid var(--progressive); outline-offset: 1px; }
+a.new, a.new:visited { color: var(--link-new); }
+a.new:visited { color: var(--link-new-visited); }
+.mw-body-content a.external,
+.mw-body-content a.external:visited { color: var(--link-external); }
+.mw-body-content a.external {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2336c' d='M1 1h4v1H2v6h6V5h1v4H1z'/%3E%3Cpath fill='%2336c' d='M6 1h3v3L8 3 5.5 5.5l-1-1L7 2z'/%3E%3C/svg%3E") no-repeat right center;
+  background-size: 0.857em;
+  padding-right: 1em;
+}
+
+/* ---- 背景と本文の箱 ----------------------------------------------------------- */
+#mw-page-base {
+  height: 5em;
+  background-color: #fff;
+  background-image: linear-gradient(#ffffff 50%, #f6f6f6 100%);
+}
+#mw-head-base {
+  margin-top: -5em;
+  margin-left: var(--panel-width);
+  height: 5em;
+}
+.mw-body {
+  position: relative;
+  margin-left: var(--panel-width);
+  margin-top: -1px;
+  padding: 1.25em 1.5em 1.5em 1.5em;
+  background-color: var(--bg-content);
+  color: var(--text);
+  border: 1px solid var(--tab-border);
+  border-right-width: 0;
+  min-height: 25em;
+}
+
+/* ---- 上部（個人メニュー・タブ・検索） --------------------------------------------- */
+#mw-head {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+}
+#p-personal {
+  position: absolute;
+  top: 6px;
+  right: 0.75em;
+  z-index: 100;
+}
+#p-personal ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 10em;
+}
+#p-personal li {
+  float: left;
+  margin-left: 0.75em;
+  margin-top: 0.5em;
+  font-size: 0.75em;
+  line-height: 1.16666667;
+  white-space: nowrap;
+}
+#pt-anon { color: var(--text-subtle); }
+
+#left-navigation {
+  float: left;
+  margin-left: var(--panel-width);
+  margin-top: 2.5em;
+  margin-bottom: -2.5em;
+}
+#right-navigation {
+  float: right;
+  margin-top: 2.5em;
+}
+
+.vectorTabs {
+  float: left;
+  height: 2.5em;
+  padding-left: 1px;
+  background-image: linear-gradient(to bottom, rgba(167, 215, 249, 0) 0, #a7d7f9 100%);
+  background-repeat: no-repeat;
+  background-size: 1px 100%;
+  background-position: left bottom;
+}
+.vectorTabs ul {
+  float: left;
+  height: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.vectorTabs li {
+  float: left;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #f3f6f9;
+  background-image: linear-gradient(to top, #77c1f6 0, #e8f2f8 1px, #ffffff 100%);
+  white-space: nowrap;
+}
+.vectorTabs li.selected {
+  background-color: #fff;
+  background-image: none;
+}
+.vectorTabs li > span {
+  display: inline-block;
+  height: 100%;
+  background-image: linear-gradient(to bottom, rgba(167, 215, 249, 0) 0, #a7d7f9 100%);
+  background-repeat: no-repeat;
+  background-size: 1px 100%;
+  background-position: right bottom;
+}
+.vectorTabs li a {
+  display: block;
+  height: 1.9em;
+  padding-left: 0.615em;
+  padding-right: 0.615em;
+  padding-top: 1.25em;
+  font-size: 0.8125em;
+  color: var(--link);
+}
+.vectorTabs li a:visited { color: var(--link); }
+.vectorTabs li.selected a,
+.vectorTabs li.selected a:visited { color: var(--text); text-decoration: none; }
+.vectorTabs li.new a,
+.vectorTabs li.new a:visited { color: var(--link-new-visited); }
+
+#p-search {
+  float: left;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+}
+#searchform { margin: 0.5em 0 0 0.5em; }
+#simpleSearch {
+  position: relative;
+  margin-top: 0.65em;
+  width: 20vw;
+  min-width: 5em;
+  max-width: 20em;
+}
+#searchInput {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 5px 2.15em 5px 5px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background-color: #fff;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-appearance: none;
+  appearance: none;
+}
+#searchInput:focus {
+  border-color: var(--progressive);
+  box-shadow: inset 0 0 0 1px var(--progressive);
+  outline: 0;
+}
+#searchInput::-webkit-search-cancel-button { display: none; }
+#searchButton {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 2em;
+  border: 0;
+  background: transparent;
+  color: var(--text-subtle);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+#searchButton:hover { color: var(--text); }
+
+/* ---- 左のサイドバー ------------------------------------------------------------ */
+#mw-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--panel-width);
+  font-size: inherit;
+}
+#p-logo {
+  width: var(--panel-width);
+  height: 160px;
+  margin-bottom: 1em;
+}
+#p-logo a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+}
+#p-logo img { display: block; }
+.logo-name {
+  margin-top: 6px;
+  font-family: var(--font-serif);
+  font-size: 1.125em;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+.logo-tagline {
+  margin-top: 3px;
+  font-size: 0.6875em;
+  color: var(--text-subtle);
+  line-height: 1.3;
+  padding: 0 0.5em;
+}
+
+#mw-panel .portal {
+  margin: 0 0.6em 0 0.7em;
+  padding: 0.25em 0;
+  background-position: top left;
+  background-repeat: no-repeat;
+}
+#mw-panel .portal + .portal {
+  margin-top: 0.4em;
+  padding-top: 0.5em;
+  background-image: linear-gradient(to right, rgba(200, 204, 209, 0) 0, #c8ccd1 33%, #c8ccd1 66%, rgba(200, 204, 209, 0) 100%);
+  background-size: 100% 1px;
+}
+#mw-panel .portal h3 {
+  margin: 0.5em 0 0 0.66666667em;
+  padding: 0.25em 0;
+  font-size: 0.75em;
+  font-weight: normal;
+  color: var(--text-subtle);
+  cursor: default;
+}
+#mw-panel .portal .body { margin-left: 1.25em; }
+#mw-panel #p-navigation .body { margin-left: 0.5em; }
+#mw-panel .portal ul {
+  list-style: none;
+  margin: 0;
+  padding: 0.3em 0 0 0;
+}
+#mw-panel .portal li {
+  margin: 0;
+  padding: 0.25em 0;
+  font-size: 0.75em;
+  line-height: 1.125em;
+  word-wrap: break-word;
+}
+
+/* スマホ用のヘッダー（パソコンでは出さない） */
+#mw-mobile-header { display: none; }
+#mw-panel-overlay { display: none; }
+
+/* ---- 本文 ------------------------------------------------------------------- */
+.firstHeading {
+  margin: 0 0 0.25em 0;
+  padding: 0;
+  font-family: var(--font-serif);
+  font-size: 1.8em;
+  font-weight: normal;
+  line-height: 1.3;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: break-word;
+}
+#siteSub {
+  display: block;
+  margin-top: 0.4em;
+  font-size: 92%;
+  color: var(--text-subtle);
+}
+#contentSub {
+  margin: 0 0 1.4em 1em;
+  font-size: 84%;
+  line-height: 1.2em;
+  color: var(--text-subtle);
+}
+#contentSub:empty { margin-bottom: 0.6em; }
+
+.mw-body-content {
+  position: relative;
+  font-size: 0.875em;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  z-index: 0;
+}
+.mw-body-content p { margin: 0.4em 0 0.5em 0; }
+.mw-body-content h1,
+.mw-body-content h2 {
+  font-family: var(--font-serif);
+  font-weight: normal;
+  line-height: 1.3;
+  margin: 1em 0 0.25em 0;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.mw-body-content h1 { font-size: 1.8em; }
+.mw-body-content h2 { font-size: 1.5em; }
+.mw-body-content h3,
+.mw-body-content h4,
+.mw-body-content h5,
+.mw-body-content h6 {
+  margin: 0.3em 0 0 0;
+  padding-top: 0.5em;
+  padding-bottom: 0;
+  font-weight: bold;
+  line-height: 1.6;
+  overflow: hidden;
+}
+.mw-body-content h3 { font-size: 1.2em; }
+.mw-body-content h4,
+.mw-body-content h5,
+.mw-body-content h6 { font-size: 100%; }
+.mw-body-content > :first-child { margin-top: 0; }
+
+.mw-body-content ul {
+  list-style-type: square;
+  margin: 0.3em 0 0 1.6em;
+  padding: 0;
+}
+.mw-body-content ol {
+  margin: 0.3em 0 0 3.2em;
+  padding: 0;
+}
+.mw-body-content li { margin-bottom: 0.1em; }
+.mw-body-content li > ul,
+.mw-body-content li > ol { margin-top: 0.1em; }
+.mw-body-content li input[type="checkbox"] { margin: 0 0.4em 0 0; vertical-align: middle; }
+.mw-body-content dl { margin: 0.2em 0 0.5em 0; }
+
+.mw-body-content code {
+  font-family: var(--font-mono);
+  background-color: var(--bg-box);
+  color: #000;
+  border: 1px solid var(--border-faint);
+  border-radius: 2px;
+  padding: 1px 4px;
+}
+.mw-body-content pre {
+  font-family: var(--font-mono);
+  background-color: var(--bg-box);
+  color: #000;
+  border: 1px solid var(--border-faint);
+  padding: 1em;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+}
+.mw-body-content pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.mw-body-content blockquote {
+  margin: 1em 0;
+  padding: 0 1.5em;
+  border-left: 4px solid var(--border-faint);
+  overflow: hidden;
+}
+.mw-body-content hr {
+  height: 1px;
+  margin: 0.2em 0;
+  border: 0;
+  background-color: var(--border);
+}
+.mw-body-content img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.mw-body-content table.wikitable {
+  margin: 1em 0;
+  background-color: var(--bg-box);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-collapse: collapse;
+}
+.mw-body-content table.wikitable > * > tr > th,
+.mw-body-content table.wikitable > * > tr > td {
+  border: 1px solid var(--border);
+  padding: 0.2em 0.4em;
+}
+.mw-body-content table.wikitable > * > tr > th {
+  background-color: var(--bg-th);
+  text-align: center;
+}
+
+/* ---- 目次 ------------------------------------------------------------------- */
+.toc {
+  display: table;
+  margin: 1em 0 0.5em 0;
+  padding: 7px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-box);
+  font-size: 95%;
+}
+.toc .toctitle {
+  text-align: center;
+  direction: ltr;
+}
+.mw-body-content .toc h2 {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: var(--font-sans);
+  font-size: 100%;
+  font-weight: bold;
+  overflow: visible;
+}
+.toctogglespan {
+  margin-left: 0.4em;
+  font-size: 94%;
+}
+.toctoggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font: inherit;
+  cursor: pointer;
+}
+.toctoggle:hover { text-decoration: underline; }
+.mw-body-content .toc ul {
+  list-style: none;
+  margin: 0.3em 0;
+  padding: 0;
+  text-align: left;
+}
+.mw-body-content .toc ul ul { margin: 0 0 0 2em; }
+.toc li { margin-bottom: 0.1em; }
+.tocnumber {
+  color: var(--text);
+  padding-right: 0.5em;
+}
+.toc.tochidden > ul { display: none; }
+
+/* ---- お知らせの枠 ------------------------------------------------------------- */
+.mw-message-box {
+  box-sizing: border-box;
+  margin-bottom: 16px;
+  padding: 12px 24px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-th);
+  color: #000;
+  overflow-wrap: break-word;
+  overflow: hidden;
+}
+.mw-message-box p { margin: 0.3em 0; }
+.mw-message-box ul { margin: 0.5em 0 0 1.6em; padding: 0; }
+.mw-message-box-error { background-color: #fee7e6; border-color: #d33; }
+.mw-message-box-warning { background-color: #fef6e7; border-color: #fc3; }
+.mw-message-box-success { background-color: #d5fdf4; border-color: #14866d; }
+.mw-message-box-info { background-color: var(--bg-box); border-color: var(--border); }
+.noarticletext { font-size: 0.875em; line-height: 1.6; }
+
+/* ---- 検索と一覧 ---------------------------------------------------------------- */
+.results-info { color: var(--text-subtle); }
+.mw-search-createlink { font-size: 1.05em; margin: 0.5em 0 1em; }
+.mw-search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 40em;
+}
+.mw-search-results li { padding-bottom: 1.2em; margin: 0; }
+.mw-search-result-heading { font-size: 1.1em; }
+.searchresult { color: var(--text); }
+.searchmatch { font-weight: bold; }
+.mw-body-content .mw-allpages-chunk {
+  columns: 14em 3;
+  list-style: none;
+  margin: 0.5em 0 1em 0;
+  padding: 0;
+}
+.mw-allpages-chunk li { break-inside: avoid; padding: 0.1em 0; }
+
+/* ---- 編集画面 ----------------------------------------------------------------- */
+#editform { font-size: 0.875em; line-height: 1.5; }
+.edit-field { margin: 0 0 0.9em 0; }
+.edit-field label {
+  display: block;
+  margin-bottom: 0.25em;
+  font-weight: bold;
+}
+#editform input[type="text"] {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 32em;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+#editform input[type="text"]:focus,
+#wpTextbox1:focus {
+  border-color: var(--progressive);
+  box-shadow: inset 0 0 0 1px var(--progressive);
+  outline: 0;
+}
+#editform input[readonly] {
+  background-color: var(--bg-th);
+  color: var(--text-subtle);
+}
+.field-hint {
+  margin-top: 0.25em;
+  font-size: 0.92em;
+  color: var(--text-subtle);
+}
+.field-hint.error { color: #d33; }
+
+.edit-tabs {
+  display: flex;
+  margin-top: 1.2em;
+  border-bottom: 1px solid var(--border);
+}
+.edit-tab {
+  position: relative;
+  top: 1px;
+  margin-right: -1px;
+  padding: 0.45em 1.4em;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  background-color: var(--bg-box);
+  color: var(--link);
+  font: inherit;
+  cursor: pointer;
+}
+.edit-tab[aria-selected="true"] {
+  background-color: #fff;
+  color: var(--text);
+  font-weight: bold;
+  border-bottom: 1px solid #fff;
+}
+.edit-tab:focus-visible { outline: 2px solid var(--progressive); outline-offset: -2px; }
+
+.wikiEditor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 0.6em;
+  padding: 4px;
+  border: 1px solid var(--border-light);
+  border-bottom: 0;
+  background-color: var(--bg-box);
+}
+.tool-button {
+  min-height: 30px;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95em;
+  cursor: pointer;
+}
+.tool-button:hover { background-color: #fff; border-color: var(--border); }
+.tool-button:active { background-color: var(--bg-th); }
+#wpTextbox1 {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 26em;
+  margin: 0;
+  padding: 0.5em;
+  border: 1px solid var(--border-light);
+  border-radius: 0;
+  background: #fff;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  tab-size: 4;
+}
+#wpTextbox1[readonly] { background-color: var(--bg-box); }
+.size-counter {
+  margin-top: 0.25em;
+  text-align: right;
+  font-size: 0.9em;
+  color: var(--text-subtle);
+}
+.size-counter.over { color: #d33; font-weight: bold; }
+
+#preview-pane {
+  margin-top: 0.6em;
+  padding: 1em 1.25em;
+  border: 1px solid var(--border-light);
+  background: #fff;
+  font-size: 1.142857em; /* #editform の 0.875em を打ち消して閲覧画面と同じ大きさにする */
+}
+#preview-pane .previewnote { font-size: 0.875em; }
+.preview-heading { margin-top: 0.2em; }
+.preview-empty { color: var(--text-subtle); }
+
+.editOptions {
+  margin: 1.2em 0 2em 0;
+  padding: 1em 1em 1.25em 1em;
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-th);
+}
+.edit-legal {
+  margin: 0.8em 0;
+  font-size: 0.92em;
+  color: var(--text-subtle);
+}
+.editButtons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 0.8em;
+}
+/* 投稿の手順 */
+.mw-body-content .submit-steps-title {
+  margin: 0 0 0.4em 0;
+  font-size: 1.35em;
+}
+.submit-steps-lead { margin: 0 0 0.6em 0; }
+.submit-steps-list {
+  margin: 0 0 1em 1.6em;
+  padding: 0;
+}
+.submit-steps-list > li {
+  margin: 0 0 0.7em 0;
+  padding-left: 0.2em;
+  line-height: 1.7;
+}
+.copy-status { margin-left: 0.4em; color: var(--text-subtle); }
+.copy-status.done { color: #14866d; font-weight: bold; }
+a.mw-ui-button {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  vertical-align: middle;
+  text-decoration: none;
+  line-height: 1.4;
+}
+.submit-steps-list .mw-ui-button { vertical-align: middle; }
+a.mw-ui-button,
+a.mw-ui-button:visited { color: var(--text); }
+a.mw-ui-button:hover { text-decoration: none; }
+.github-link::after {
+  content: '';
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  margin-left: 0.4em;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23202122' d='M1 1h4v1H2v6h6V5h1v4H1z'/%3E%3Cpath fill='%23202122' d='M6 1h3v3L8 3 5.5 5.5l-1-1L7 2z'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+.step-note {
+  display: inline-block;
+  margin-left: 0.3em;
+  font-size: 0.92em;
+  color: var(--text-subtle);
+}
+.clipboard-helper {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+/* 画像付きの詳しい手順 */
+.howto {
+  margin: 0 0 2em 0;
+  border: 1px solid var(--border-light);
+  background: #fff;
+}
+.howto > summary {
+  padding: 0.7em 1em;
+  background-color: var(--bg-box);
+  color: var(--link);
+  font-weight: bold;
+  cursor: pointer;
+}
+.howto[open] > summary { border-bottom: 1px solid var(--border-light); }
+.howto-body {
+  padding: 0.5em 1.25em 1em;
+  font-size: 1em; /* #editform（0.875em）の中なので、閲覧画面と同じ 14px になる */
+}
+.mw-body-content img[src^="img/guide/"] {
+  display: block;
+  margin: 0.6em 0 0.8em;
+  border: 1px solid var(--border-light);
+}
+
+.mw-ui-button {
+  min-height: 32px;
+  padding: 0.45em 1.1em;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background-color: var(--bg-box);
+  color: var(--text);
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+.mw-ui-button:hover { background-color: #fff; }
+.mw-ui-button.mw-ui-progressive {
+  background-color: var(--progressive);
+  border-color: var(--progressive);
+  color: #fff;
+}
+.mw-ui-button.mw-ui-progressive:hover { background-color: #447ff5; border-color: #447ff5; }
+.mw-ui-button.mw-ui-progressive:active { background-color: #2a4b8d; border-color: #2a4b8d; }
+.mw-ui-button:disabled,
+.mw-ui-button.mw-ui-progressive:disabled {
+  background-color: var(--border-light);
+  border-color: var(--border-light);
+  color: #fff;
+  cursor: default;
+}
+.mw-ui-button:focus-visible { outline: 2px solid var(--progressive); outline-offset: 1px; }
+
+/* ---- フッター ----------------------------------------------------------------- */
+#footer {
+  margin-left: var(--panel-width);
+  padding: 0.75em 1.25em 2em;
+  font-size: 0.75em;
+}
+#footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#footer-info li {
+  margin: 0;
+  padding: 0.5em 0;
+  color: var(--text);
+  line-height: 1.4;
+}
+#footer-places { overflow: hidden; }
+#footer-places li {
+  float: left;
+  margin-right: 1em;
+  padding: 0.5em 0;
+  line-height: 2em;
+}
+
+/* ---- スマホ（幅 720px 以下） ------------------------------------------------------ */
+@media (max-width: 720px) {
+  body {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+  }
+  .mw-jump-link { order: 0; }
+  #mw-mobile-header {
+    order: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    height: 48px;
+    padding: 0 8px 0 4px;
+    background-color: #fff;
+    border-bottom: 1px solid var(--border-light);
+  }
+  #mw-menu-toggle {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .menu-icon,
+  .menu-icon::before,
+  .menu-icon::after {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background-color: var(--text);
+    border-radius: 1px;
+  }
+  .menu-icon { position: relative; }
+  .menu-icon::before,
+  .menu-icon::after { content: ''; position: absolute; left: 0; }
+  .menu-icon::before { top: -6px; }
+  .menu-icon::after { top: 6px; }
+  .mobile-site-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    font-family: var(--font-serif);
+    font-size: 1.15em;
+  }
+  .mobile-site-name:visited { color: var(--text); }
+
+  #mw-page-base,
+  #mw-head-base { display: none; }
+
+  #mw-navigation { order: 2; }
+  #mw-head {
+    position: static;
+    width: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    padding: 8px 8px 0 8px;
+    background-image: linear-gradient(#ffffff 0, #f6f6f6 100%);
+    border-bottom: 1px solid var(--tab-border);
+  }
+  #p-personal { display: none; }
+  #right-navigation { display: contents; }
+  #p-search {
+    order: 1;
+    float: none;
+    width: 100%;
+    margin: 0 0 8px 0;
+  }
+  #searchform { margin: 0; }
+  #simpleSearch {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+  #searchInput {
+    font-size: 16px;
+    padding: 8px 2.5em 8px 8px;
+  }
+  #left-navigation {
+    order: 2;
+    float: none;
+    margin: 0 0 -1px 0;
+  }
+  #p-views {
+    order: 3;
+    float: none;
+    margin: 0 0 -1px auto;
+  }
+  .vectorTabs li a {
+    font-size: 0.875em;
+    padding-top: 1.05em;
+  }
+
+  .mw-body {
+    order: 3;
+    margin: 0;
+    padding: 1em 16px 1.5em;
+    border: 0;
+    min-height: 0;
+  }
+  .firstHeading { font-size: 1.6em; }
+  .mw-body-content { font-size: 0.9375em; }
+  .mw-body-content .mw-allpages-chunk { columns: 1; }
+
+  #footer {
+    order: 4;
+    margin: 0;
+    padding: 1em 16px 2em;
+    border-top: 1px solid var(--border-light);
+    background-color: var(--bg-page);
+  }
+
+  /* サイドバーは左から出るメニューにする */
+  #mw-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    width: 16em;
+    max-width: 82vw;
+    overflow-y: auto;
+    background-color: var(--bg-page);
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.25);
+    transform: translateX(-105%);
+    transition: transform 0.2s ease, visibility 0.2s;
+    visibility: hidden;
+  }
+  body.nav-open #mw-panel {
+    transform: none;
+    visibility: visible;
+  }
+  #mw-panel-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background-color: rgba(0, 0, 0, 0.35);
+  }
+  #p-logo, #p-logo a { width: auto; height: 140px; }
+  #mw-panel .portal li {
+    font-size: 0.95em;
+    padding: 0.45em 0;
+  }
+
+  #editform input[type="text"],
+  #wpTextbox1 { font-size: 16px; max-width: none; }
+  .edit-tab { flex: 1; }
+  .editOptions { padding: 1em 12px; }
+  #preview-pane { padding: 0.75em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mw-panel { transition: none; }
+}
+
+@media print {
+  #mw-navigation, #mw-mobile-header, #mw-page-base, #mw-head-base, #footer-places, .toc, .mw-jump-link { display: none !important; }
+  .mw-body { margin: 0; border: 0; padding: 0; }
+  #footer { margin: 0; }
+  body { background: #fff; }
+}

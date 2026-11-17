@@ -1,0 +1,21 @@
+# 依存パッケージ（npm install で入る）
+node_modules/
+
+# build-index.mjs が作る一覧（公開時に GitHub Actions が作る）
+site/pages/index.json
+
+# 秘密の値を書いたファイルを置かないための保険
+.env
+.env.*
+
+# テストの結果
+test-results/
+playwright-report/
+blob-report/
+
+# OS・エディタ
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+*.log

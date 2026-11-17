@@ -1,0 +1,39 @@
+# プルリクの記事と、説明欄の同意チェックを検証する。
+# 検証スクリプトはマージ先（main）のものを使う。プルリク側で scripts/ を書き換えても検証をすり抜けられないようにするため。
+name: Validate
+
+on:
+  pull_request:
+    # edited：説明欄のチェックを直したときにも、もう一度確認する
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: プルリクの内容を取得
+        uses: actions/checkout@v5
+        with:
+          path: pr
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: マージ先（検証スクリプト）を取得
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+          persist-credentials: false
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: 記事と同意のチェックを検証
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node base/scripts/validate.mjs --root pr --base "$BASE_REF"

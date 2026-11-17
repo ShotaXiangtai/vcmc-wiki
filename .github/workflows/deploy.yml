@@ -1,0 +1,47 @@
+# main に push（プルリクのマージを含む）されたら、記事の一覧を作って GitHub Pages に公開する
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Actions タブから手動でも実行できる
+
+# GITHUB_TOKEN の権限は必要最小限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 公開が重なったら順番に（途中のものは取り消さない）
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: 記事を検証
+        run: node scripts/validate.mjs
+
+      - name: 記事の一覧（site/pages/index.json）を作る
+        run: node scripts/build-index.mjs
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - name: GitHub Pages に公開
+        id: deployment
+        uses: actions/deploy-pages@v4

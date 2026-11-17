@@ -1,0 +1,21 @@
+{
+  "name": "vcmc-wiki",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VoiceMC Wiki（GitHub Pages で公開する、だれでも編集を提案できる Wiki）",
+  "type": "module",
+  "scripts": {
+    "build:index": "node scripts/build-index.mjs",
+    "validate": "node scripts/validate.mjs",
+    "serve": "node scripts/serve.mjs",
+    "vendor": "node scripts/copy-vendor.mjs",
+    "test": "node --test test/unit/*.test.mjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "dompurify": "^3.4.18",
+    "marked": "^18.2.1"
+  },
+  "license": "MIT"
+}
