@@ -166,6 +166,19 @@ a.new:visited { color: var(--link-new-visited); }
   margin-left: var(--panel-width);
   height: 5em;
 }
+/* Wiki の枠（左のメニュー・タブ・検索）を使わない、1 枚だけのページ（privacy-policy.html） */
+.standalone-page {
+  max-width: 52em;
+  margin: 2em auto;
+  padding: 1.25em 1.5em 1.5em 1.5em;
+  background-color: var(--bg-content);
+  color: var(--text);
+  border: 1px solid var(--tab-border);
+}
+@media (max-width: 720px) {
+  .standalone-page { margin: 0; padding: 1em; border-width: 0; }
+}
+
 .mw-body {
   position: relative;
   margin-left: var(--panel-width);

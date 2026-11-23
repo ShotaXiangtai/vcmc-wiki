@@ -836,3 +836,30 @@ test.describe('スマホ', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test.describe('プライバシーポリシー', () => {
+  test('URL で開けて、JavaScript なしでも読め、一覧・検索・検索エンジンには出ない', async ({ page, browser }) => {
+    const { errors } = await setup(page);
+    await page.goto('/privacy-policy.html');
+    await expect(page.locator('h1')).toHaveText('プライバシーポリシー');
+    await expect(page.locator('h2')).toHaveCount(11);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    await page.screenshot({ path: `${SHOTS}/12-privacy-policy.png`, fullPage: true });
+
+    // 一覧と全文検索のデータに入っていない
+    const index = await (await page.request.get('/pages/index.json')).text();
+    const search = await (await page.request.get('/pages/search.json')).text();
+    expect(index).not.toContain('プライバシーポリシー');
+    expect(search).not.toContain('プライバシーポリシー');
+
+    // JavaScript を切っても本文が読める（審査で機械的に読まれるとき用）
+    const noJs = await browser.newContext({ javaScriptEnabled: false });
+    const plain = await noJs.newPage();
+    await plain.goto('/privacy-policy.html');
+    await expect(plain.locator('h1')).toHaveText('プライバシーポリシー');
+    await expect(plain.getByText('取得する情報')).toBeVisible();
+    await noJs.close();
+    expect(errors).toEqual([]);
+  });
+});
